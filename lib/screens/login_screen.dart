@@ -86,7 +86,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Masuk Akun',
+                          const Text('Daftar Akun',
                               style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700,
                                   color: AppColors.slate800)),
                           const SizedBox(height: 4),
