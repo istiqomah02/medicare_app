@@ -40,8 +40,11 @@ class PengaturanScreen extends StatelessWidget {
       color: Colors.white,
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 14),
       child: const Text('Pengaturan',
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700,
-              color: AppColors.slate800, letterSpacing: -0.4)),
+          style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+              color: AppColors.slate800,
+              letterSpacing: -0.4)),
     );
   }
 
@@ -64,44 +67,50 @@ class PengaturanScreen extends StatelessWidget {
             );
           },
           child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.slate100, width: 0.5),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 44, height: 44,
-                decoration: BoxDecoration(
-                  color: AppColors.slate800,
-                  borderRadius: BorderRadius.circular(12),
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.slate100, width: 0.5),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: AppColors.slate800,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: Text(inisial,
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700)),
+                  ),
                 ),
-                child: Center(
-                  child: Text(inisial,
-                      style: const TextStyle(color: Colors.white,
-                          fontSize: 15, fontWeight: FontWeight.w700)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(nama,
+                          style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.slate800)),
+                      const SizedBox(height: 2),
+                      Text(email,
+                          style: const TextStyle(
+                              fontSize: 12, color: AppColors.slate400)),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(nama,
-                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700,
-                            color: AppColors.slate800)),
-                    const SizedBox(height: 2),
-                    Text(email,
-                        style: const TextStyle(fontSize: 12, color: AppColors.slate400)),
-                  ],
-                ),
-              ),
-              const Icon(Icons.chevron_right, color: AppColors.slate400),
-            ],
-          ),
+                const Icon(Icons.chevron_right, color: AppColors.slate400),
+              ],
+            ),
           ),
         );
       },
@@ -153,18 +162,23 @@ class PengaturanScreen extends StatelessWidget {
         child: Row(
           children: [
             Container(
-              width: 40, height: 40,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
                 color: AppColors.red200,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.logout_rounded, color: Colors.white, size: 20),
+              child: const Icon(Icons.logout_rounded,
+                  color: Colors.white, size: 20),
             ),
             const SizedBox(width: 12),
             const Expanded(
               child: Text('KELUAR',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700,
-                      color: AppColors.red400, letterSpacing: 0.5)),
+                  style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.red400,
+                      letterSpacing: 0.5)),
             ),
             const Icon(Icons.chevron_right, color: AppColors.red400),
           ],
@@ -184,8 +198,10 @@ class _SectionLabel extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
       child: Text(text,
           style: const TextStyle(
-              fontSize: 11, fontWeight: FontWeight.w700,
-              color: AppColors.slate400, letterSpacing: 0.8)),
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: AppColors.slate400,
+              letterSpacing: 0.8)),
     );
   }
 }
@@ -195,7 +211,11 @@ class _NotifItem {
   final Color color;
   final String title;
   final String sub;
-  _NotifItem({required this.icon, required this.color, required this.title, required this.sub});
+  _NotifItem(
+      {required this.icon,
+      required this.color,
+      required this.title,
+      required this.sub});
 }
 
 /// Kartu notifikasi dengan toggle switch yang bisa di-tap (state lokal).
@@ -233,11 +253,13 @@ class _NotifikasiCardState extends State<_NotifikasiCard> {
           return Column(
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 child: Row(
                   children: [
                     Container(
-                      width: 40, height: 40,
+                      width: 40,
+                      height: 40,
                       decoration: BoxDecoration(
                         color: item.color,
                         borderRadius: BorderRadius.circular(10),
@@ -250,11 +272,14 @@ class _NotifikasiCardState extends State<_NotifikasiCard> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(item.title,
-                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
+                              style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
                                   color: AppColors.slate800)),
                           const SizedBox(height: 2),
                           Text(item.sub,
-                              style: const TextStyle(fontSize: 12, color: AppColors.slate400)),
+                              style: const TextStyle(
+                                  fontSize: 12, color: AppColors.slate400)),
                         ],
                       ),
                     ),
@@ -270,7 +295,11 @@ class _NotifikasiCardState extends State<_NotifikasiCard> {
                 ),
               ),
               if (!isLast)
-                const Divider(height: 0.5, indent: 16, endIndent: 16, color: AppColors.slate100),
+                const Divider(
+                    height: 0.5,
+                    indent: 16,
+                    endIndent: 16,
+                    color: AppColors.slate100),
             ],
           );
         }).toList(),

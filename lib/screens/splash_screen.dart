@@ -18,11 +18,12 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void initState() {
     super.initState();
-    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 800));
-    _fadeAnim = Tween<double>(begin: 0, end: 1).animate(
-        CurvedAnimation(parent: _ctrl, curve: Curves.easeIn));
-    _scaleAnim = Tween<double>(begin: 0.8, end: 1).animate(
-        CurvedAnimation(parent: _ctrl, curve: Curves.easeOutBack));
+    _ctrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 800));
+    _fadeAnim = Tween<double>(begin: 0, end: 1)
+        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeIn));
+    _scaleAnim = Tween<double>(begin: 0.8, end: 1)
+        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutBack));
     _ctrl.forward();
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) {
@@ -51,7 +52,8 @@ class _SplashScreenState extends State<SplashScreen>
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  width: 52, height: 52,
+                  width: 52,
+                  height: 52,
                   decoration: BoxDecoration(
                     color: AppColors.slate800,
                     borderRadius: BorderRadius.circular(14),
@@ -65,15 +67,19 @@ class _SplashScreenState extends State<SplashScreen>
                       TextSpan(
                         text: 'Medi',
                         style: TextStyle(
-                          fontSize: 28, fontWeight: FontWeight.w700,
-                          color: AppColors.slate800, letterSpacing: -0.5,
+                          fontSize: 28,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.slate800,
+                          letterSpacing: -0.5,
                         ),
                       ),
                       TextSpan(
                         text: 'Care',
                         style: TextStyle(
-                          fontSize: 28, fontWeight: FontWeight.w700,
-                          color: AppColors.purple400, letterSpacing: -0.5,
+                          fontSize: 28,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.purple400,
+                          letterSpacing: -0.5,
                         ),
                       ),
                     ],

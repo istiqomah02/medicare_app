@@ -22,7 +22,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _masukDenganAkun(UserAccount akun) {
-    simpanAkunLogin(akun.email);
+    simpanAkunLogin(akun.email, nama: akun.nama);
     Navigator.pushReplacement(
         context, MaterialPageRoute(builder: (_) => const MainNavigation()));
   }

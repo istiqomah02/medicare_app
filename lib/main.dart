@@ -1,20 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'app_theme.dart';
+import 'models/obat_model.dart';
+import 'models/user_model.dart';
 import 'screens/splash_screen.dart';
 import 'screens/beranda_screen.dart';
 import 'screens/jadwal_screen.dart';
 import 'screens/riwayat_screen.dart';
 import 'screens/pengaturan_screen.dart';
-import 'app_theme.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // INI PENTING: Inisialisasi data dummy
+  initDummyData();
+  
+  // Set default user
+  if (daftarAkun.isNotEmpty) {
+    akunTerakhirLogin = daftarAkun.first;
+    currentUserNotifier.value = daftarAkun.first;
+  }
+  
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.dark,
     ),
   );
+  
   runApp(const MediCareApp());
 }
 
@@ -55,7 +68,9 @@ class _MainNavigationState extends State<MainNavigation> {
       body: _pages[_currentIndex],
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
-          border: Border(top: BorderSide(color: Color(0xFFE2E8F0), width: 0.5)),
+          border: Border(
+            top: BorderSide(color: AppColors.slate200, width: 0.5),
+          ),
         ),
         child: BottomNavigationBar(
           currentIndex: _currentIndex,
@@ -65,27 +80,35 @@ class _MainNavigationState extends State<MainNavigation> {
           backgroundColor: Colors.white,
           elevation: 0,
           type: BottomNavigationBarType.fixed,
-          selectedLabelStyle:
-              const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
-          unselectedLabelStyle:
-              const TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
+          selectedLabelStyle: const TextStyle(
+            fontSize: 11, 
+            fontWeight: FontWeight.w700,
+          ),
+          unselectedLabelStyle: const TextStyle(
+            fontSize: 11, 
+            fontWeight: FontWeight.w500,
+          ),
           items: const [
             BottomNavigationBarItem(
-                icon: Icon(Icons.home_outlined),
-                activeIcon: Icon(Icons.home),
-                label: 'Beranda'),
+              icon: Icon(Icons.home_outlined),
+              activeIcon: Icon(Icons.home),
+              label: 'Beranda'
+            ),
             BottomNavigationBarItem(
-                icon: Icon(Icons.calendar_today_outlined),
-                activeIcon: Icon(Icons.calendar_today),
-                label: 'Jadwal'),
+              icon: Icon(Icons.calendar_today_outlined),
+              activeIcon: Icon(Icons.calendar_today),
+              label: 'Jadwal'
+            ),
             BottomNavigationBarItem(
-                icon: Icon(Icons.bar_chart_outlined),
-                activeIcon: Icon(Icons.bar_chart),
-                label: 'Riwayat'),
+              icon: Icon(Icons.bar_chart_outlined),
+              activeIcon: Icon(Icons.bar_chart),
+              label: 'Riwayat'
+            ),
             BottomNavigationBarItem(
-                icon: Icon(Icons.settings_outlined),
-                activeIcon: Icon(Icons.settings),
-                label: 'Pengaturan'),
+              icon: Icon(Icons.settings_outlined),
+              activeIcon: Icon(Icons.settings),
+              label: 'Pengaturan'
+            ),
           ],
         ),
       ),
