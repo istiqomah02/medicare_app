@@ -12,11 +12,15 @@ dependencies:
   
   # UI & Icons
   cupertino_icons: ^1.0.8
+<<<<<<< HEAD
   
   # Utility
   uuid: ^4.3.3          # Untuk generate ID unik
   intl: ^0.18.1         # Untuk formatting tanggal dan waktu
   shared_preferences: ^2.2.3  # Untuk menyimpan data lokal (opsional)
+=======
+  image_picker: ^1.0.7
+>>>>>>> fd75939c4a7ac12299f63ac3c5805c9b4d479688
 
 dev_dependencies:
   flutter_test:
