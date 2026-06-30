@@ -1,19 +1,19 @@
-<<<<<<< HEAD
 import 'package:flutter/material.dart';
-=======
 import 'dart:typed_data';
-import 'package:flutter/foundation.dart';
->>>>>>> fd75939c4a7ac12299f63ac3c5805c9b4d479688
 
 class UserAccount {
   final String nama;
   final String email;
   final String inisial;
+  final String role;
+  final bool isLastLogin;
 
   const UserAccount({
     required this.nama,
     required this.email,
     required this.inisial,
+    this.role = 'utama',
+    this.isLastLogin = false,
   });
 }
 
@@ -55,57 +55,37 @@ String _buatInisial(String nama) {
 /// Jika email belum ada, akan membuat akun baru otomatis menggunakan
 /// [nama] yang diberikan (atau email sebagai fallback jika nama kosong).
 void simpanAkunLogin(String email, {String nama = ''}) {
-  final emailBersih = email.trim();
-  final existingIndex = daftarAkun.indexWhere(
-    (a) => a.email.toLowerCase() == emailBersih.toLowerCase(),
+  final emailRapi = email.trim();
+  final idx = daftarAkun.indexWhere(
+    (a) => a.email.toLowerCase() == emailRapi.toLowerCase(),
   );
 
-  UserAccount akun;
-  if (existingIndex != -1) {
-    // Akun sudah ada -> pakai data yang tersimpan
-    akun = daftarAkun[existingIndex];
+  if (idx != -1) {
+    akunTerakhirLogin = daftarAkun[idx];
   } else {
-    // Akun belum ada -> buat akun baru otomatis
-    final namaFinal =
-        nama.trim().isNotEmpty ? nama.trim() : emailBersih.split('@').first;
-    akun = UserAccount(
-      nama: namaFinal,
-      email: emailBersih,
-      inisial: _buatInisial(namaFinal),
-    );
-    daftarAkun.add(akun);
-  }
-
-<<<<<<< HEAD
-  akunTerakhirLogin = akun;
-  currentUserNotifier.value = akun;
-}
-=======
-  if (idx == -1) {
     final String local = emailRapi.split('@').first;
-    final String nama = local.isEmpty
-        ? emailRapi
-        : local[0].toUpperCase() + local.substring(1);
-    final String inisial = local.isEmpty
+    final String namaFinal =
+        nama.trim().isNotEmpty ? nama.trim() : local;
+    final String inisial = namaFinal.isEmpty
         ? '?'
-        : (local.length >= 2
-            ? local.substring(0, 2).toUpperCase()
-            : local.substring(0, 1).toUpperCase());
+        : _buatInisial(namaFinal);
 
-    daftarAkun.add(UserAccount(
-      nama: nama,
+    final akunBaru = UserAccount(
+      nama: namaFinal,
       email: emailRapi,
       inisial: inisial,
       role: 'utama',
       isLastLogin: true,
-    ));
+    );
+    daftarAkun.add(akunBaru);
+    akunTerakhirLogin = akunBaru;
   }
 
   // Beri tahu semua widget yang mendengarkan (mis. PengaturanScreen)
   // bahwa akun yang aktif sekarang sudah berubah.
   currentUserNotifier.value = akunTerakhirLogin;
 
-  // TAMBAHAN: sync daftarAkunNotifier & reset foto profil saat ganti akun
+  // sync daftarAkunNotifier & reset foto profil saat ganti akun
   daftarAkunNotifier.value = List.from(daftarAkun);
   fotoProfilNotifier.value = null;
 }
@@ -208,7 +188,6 @@ bool tambahAkunTanpaLogin(String email, String password) {
   return true;
 }
 
-
 void hapusAkun(String email) {
   daftarAkun.removeWhere(
       (a) => a.email.toLowerCase() == email.toLowerCase());
@@ -251,4 +230,3 @@ void resetPasswordViaOtp(String email, String passwordBaru) {
   _otpAktif = null;
   _emailOtpAktif = null;
 }
->>>>>>> fd75939c4a7ac12299f63ac3c5805c9b4d479688
