@@ -9,25 +9,28 @@ import 'screens/jadwal_screen.dart';
 import 'screens/riwayat_screen.dart';
 import 'screens/pengaturan_screen.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // INI PENTING: Inisialisasi data dummy
   initDummyData();
-  
+
+  // Muat data anggota keluarga yang tersimpan sebelumnya
+  await muatAnggotaKeluarga();
+
   // Set default user
   if (daftarAkun.isNotEmpty) {
     akunTerakhirLogin = daftarAkun.first;
     currentUserNotifier.value = daftarAkun.first;
   }
-  
+
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.dark,
     ),
   );
-  
+
   runApp(const MediCareApp());
 }
 
@@ -55,11 +58,17 @@ class MainNavigation extends StatefulWidget {
 class _MainNavigationState extends State<MainNavigation> {
   int _currentIndex = 0;
 
-  final List<Widget> _pages = const [
-    BerandaScreen(),
-    JadwalScreen(),
-    RiwayatScreen(),
-    PengaturanScreen(),
+  // Dipindah dari const List ke late final List karena RiwayatScreen
+  // sekarang butuh callback (onKembali) untuk pindah tab ke Beranda,
+  // bukan lagi memakai Navigator.pop yang menyebabkan layar putih kosong
+  // (karena RiwayatScreen adalah tab, bukan halaman yang di-push).
+  late final List<Widget> _pages = [
+    const BerandaScreen(),
+    const JadwalScreen(),
+    RiwayatScreen(
+      onKembali: () => setState(() => _currentIndex = 0),
+    ),
+    const PengaturanScreen(),
   ];
 
   @override
@@ -81,11 +90,11 @@ class _MainNavigationState extends State<MainNavigation> {
           elevation: 0,
           type: BottomNavigationBarType.fixed,
           selectedLabelStyle: const TextStyle(
-            fontSize: 11, 
+            fontSize: 11,
             fontWeight: FontWeight.w700,
           ),
           unselectedLabelStyle: const TextStyle(
-            fontSize: 11, 
+            fontSize: 11,
             fontWeight: FontWeight.w500,
           ),
           items: const [

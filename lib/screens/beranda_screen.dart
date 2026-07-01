@@ -4,6 +4,8 @@ import '../models/obat_model.dart';
 import '../widgets/common_widgets.dart';
 import 'tambah_obat_screen.dart';
 import 'riwayat_screen.dart';
+import 'notifikasi_screen.dart';
+import 'keluarga_screen.dart';
 
 class BerandaScreen extends StatelessWidget {
   const BerandaScreen({super.key});
@@ -112,16 +114,25 @@ class BerandaScreen extends StatelessWidget {
                           TextStyle(fontSize: 12, color: AppColors.slate400)),
                 ],
               ),
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: AppColors.slate50,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.slate100, width: 0.5),
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const NotifikasiScreen()),
+                  );
+                },
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: AppColors.slate50,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.slate100, width: 0.5),
+                  ),
+                  child: const Icon(Icons.notifications_outlined,
+                      size: 20, color: AppColors.slate900),
                 ),
-                child: const Icon(Icons.notifications_outlined,
-                    size: 20, color: AppColors.slate900),
               ),
             ],
           ),
@@ -203,25 +214,33 @@ class BerandaScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-                decoration: BoxDecoration(
-                  color: AppColors.purple50,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppColors.purple200, width: 0.5),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(Icons.people_outline,
-                        size: 14, color: AppColors.purple600),
-                    SizedBox(width: 4),
-                    Text('Keluarga',
-                        style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.purple600)),
-                  ],
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const KeluargaScreen()),
+                  );
+                },
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                  decoration: BoxDecoration(
+                    color: AppColors.purple50,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppColors.purple200, width: 0.5),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.people_outline,
+                          size: 14, color: AppColors.purple600),
+                      SizedBox(width: 4),
+                      Text('Keluarga',
+                          style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.purple600)),
+                    ],
+                  ),
                 ),
               ),
             ],

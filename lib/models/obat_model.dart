@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 enum MedStatus { sudah, belum, terlewat }
+
+/// Jenis notifikasi/log — dipakai untuk membedakan ikon & warna di layar Notifikasi
+enum JenisLog { ditambahkan, pengingat, terlewat, stokMenipis, dihapus }
 
 class Obat {
   final String id;
@@ -76,12 +81,16 @@ class AnggotaKeluarga {
   });
 
   int get belum => totalObat - sudahDiminum;
+
+  int get persentase =>
+      totalObat > 0 ? ((sudahDiminum / totalObat) * 100).round() : 0;
 }
 
 class LogAktivitas {
   final String id;
   final String namaObat;
   final MedStatus status;
+  final JenisLog jenis;
   final String waktuLog;
   final DateTime waktu;
 
@@ -89,6 +98,7 @@ class LogAktivitas {
     required this.id,
     required this.namaObat,
     required this.status,
+    this.jenis = JenisLog.ditambahkan,
     required this.waktuLog,
     DateTime? waktu,
   }) : waktu = waktu ?? DateTime.now();
@@ -119,7 +129,8 @@ void tambahObat(Obat obat) {
   final log = LogAktivitas(
     id: DateTime.now().millisecondsSinceEpoch.toString(),
     namaObat: obat.nama,
-    status: MedStatus.belum,
+    status: obat.status,
+    jenis: JenisLog.ditambahkan,
     waktuLog: 'Ditambahkan ${_formatTanggalWaktu(obat.waktuTambah)}',
     waktu: obat.waktuTambah,
   );
@@ -135,15 +146,19 @@ void updateStatusObat(String id, MedStatus status) {
     obatNotifier.value = List.from(daftarObat);
 
     String statusText;
+    JenisLog jenis;
     switch (status) {
       case MedStatus.sudah:
         statusText = 'Diminum';
+        jenis = JenisLog.pengingat;
         break;
       case MedStatus.belum:
         statusText = 'Belum diminum';
+        jenis = JenisLog.pengingat;
         break;
       case MedStatus.terlewat:
         statusText = 'Terlewat';
+        jenis = JenisLog.terlewat;
         break;
     }
 
@@ -151,6 +166,7 @@ void updateStatusObat(String id, MedStatus status) {
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       namaObat: obatLama.nama,
       status: status,
+      jenis: jenis,
       waktuLog: '$statusText ${_formatWaktu(DateTime.now())}',
       waktu: DateTime.now(),
     );
@@ -170,12 +186,78 @@ void hapusObat(String id) {
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       namaObat: obat.nama,
       status: MedStatus.belum,
+      jenis: JenisLog.dihapus,
       waktuLog: 'Dihapus ${_formatWaktu(DateTime.now())}',
       waktu: DateTime.now(),
     );
     logAktivitas.insert(0, log);
     logNotifier.value = List.from(logAktivitas);
   }
+}
+
+/// Catat notifikasi pengingat "waktunya minum obat" — dipanggil manual sekarang,
+/// nanti akan otomatis terpicu lewat push notification terjadwal.
+void catatPengingatMinum(Obat obat) {
+  final log = LogAktivitas(
+    id: DateTime.now().millisecondsSinceEpoch.toString(),
+    namaObat: obat.nama,
+    status: MedStatus.belum,
+    jenis: JenisLog.pengingat,
+    waktuLog: 'Waktunya minum • ${obat.waktu}',
+    waktu: DateTime.now(),
+  );
+  logAktivitas.insert(0, log);
+  logNotifier.value = List.from(logAktivitas);
+}
+
+/// Catat notifikasi "obat terlewat" — obat yang jadwalnya sudah lewat tapi belum diminum
+void catatObatTerlewat(Obat obat) {
+  final log = LogAktivitas(
+    id: DateTime.now().millisecondsSinceEpoch.toString(),
+    namaObat: obat.nama,
+    status: MedStatus.terlewat,
+    jenis: JenisLog.terlewat,
+    waktuLog: 'Terlewat • jadwal ${obat.waktu}',
+    waktu: DateTime.now(),
+  );
+  logAktivitas.insert(0, log);
+  logNotifier.value = List.from(logAktivitas);
+}
+
+/// Catat notifikasi "stok menipis" — dipanggil saat stokHariLagi obat sudah rendah
+void catatStokMenipis(Obat obat) {
+  final log = LogAktivitas(
+    id: DateTime.now().millisecondsSinceEpoch.toString(),
+    namaObat: obat.nama,
+    status: MedStatus.belum,
+    jenis: JenisLog.stokMenipis,
+    waktuLog: 'Stok tinggal ${obat.stokHariLagi} hari lagi',
+    waktu: DateTime.now(),
+  );
+  logAktivitas.insert(0, log);
+  logNotifier.value = List.from(logAktivitas);
+}
+
+/// Cek semua obat, catat notifikasi stok menipis untuk yang stoknya <= 3 hari lagi.
+/// Bisa dipanggil sekali saat app dibuka (mis. dari main.dart / beranda_screen).
+void cekStokMenipisSemuaObat() {
+  for (final obat in daftarObat) {
+    if (obat.notifStok && obat.stokHariLagi <= 3) {
+      catatStokMenipis(obat);
+    }
+  }
+}
+
+/// Hapus satu entri notifikasi/log berdasarkan id
+void hapusLogAktivitas(String id) {
+  logAktivitas.removeWhere((l) => l.id == id);
+  logNotifier.value = List.from(logAktivitas);
+}
+
+/// Hapus semua riwayat notifikasi/log sekaligus
+void hapusSemuaLog() {
+  logAktivitas.clear();
+  logNotifier.value = List.from(logAktivitas);
 }
 
 Map<String, dynamic> getStatistikKepatuhan() {
@@ -252,5 +334,99 @@ void initDummyData() {
       stokHariLagi: 3,
     );
     tambahObat(obat3);
+
+    // Contoh notifikasi variatif supaya layar Notifikasi terlihat realistis
+    catatPengingatMinum(obat2);
+    catatObatTerlewat(obat2);
+    cekStokMenipisSemuaObat();
+  }
+}
+
+// ─────────────────────────────────────────────
+// Fitur Anggota Keluarga (lokal, tersimpan di SharedPreferences)
+// ─────────────────────────────────────────────
+
+List<AnggotaKeluarga> daftarAnggotaKeluarga = [anggotaAdek];
+
+final ValueNotifier<List<AnggotaKeluarga>> anggotaKeluargaNotifier =
+    ValueNotifier<List<AnggotaKeluarga>>([anggotaAdek]);
+
+const String _kAnggotaKeluargaKey = 'daftar_anggota_keluarga';
+
+/// Buat inisial otomatis dari nama, contoh: "Budi Santoso" -> "BS"
+String buatInisialAnggota(String nama) {
+  final parts =
+      nama.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+  if (parts.isEmpty) return '?';
+  if (parts.length == 1) {
+    return parts.first
+        .substring(0, parts.first.length >= 2 ? 2 : 1)
+        .toUpperCase();
+  }
+  return (parts.first[0] + parts.last[0]).toUpperCase();
+}
+
+/// Tambah anggota keluarga baru, langsung update UI & simpan ke SharedPreferences
+Future<void> tambahAnggotaKeluarga(String nama) async {
+  final namaRapi = nama.trim();
+  if (namaRapi.isEmpty) return;
+
+  final anggotaBaru = AnggotaKeluarga(
+    nama: namaRapi,
+    inisial: buatInisialAnggota(namaRapi),
+    totalObat: 0,
+    sudahDiminum: 0,
+  );
+
+  daftarAnggotaKeluarga.add(anggotaBaru);
+  anggotaKeluargaNotifier.value = List.from(daftarAnggotaKeluarga);
+
+  await _simpanAnggotaKeluarga();
+}
+
+/// Hapus anggota keluarga (opsional, dipakai kalau nanti mau fitur hapus)
+Future<void> hapusAnggotaKeluarga(String nama) async {
+  daftarAnggotaKeluarga.removeWhere((a) => a.nama == nama);
+  anggotaKeluargaNotifier.value = List.from(daftarAnggotaKeluarga);
+  await _simpanAnggotaKeluarga();
+}
+
+Future<void> _simpanAnggotaKeluarga() async {
+  final prefs = await SharedPreferences.getInstance();
+  final list = daftarAnggotaKeluarga
+      .map((a) => {
+            'nama': a.nama,
+            'inisial': a.inisial,
+            'totalObat': a.totalObat,
+            'sudahDiminum': a.sudahDiminum,
+          })
+      .toList();
+  await prefs.setString(_kAnggotaKeluargaKey, jsonEncode(list));
+}
+
+/// Panggil ini sekali di awal (misal di main.dart) untuk memuat data
+/// anggota keluarga yang tersimpan sebelumnya.
+Future<void> muatAnggotaKeluarga() async {
+  final prefs = await SharedPreferences.getInstance();
+  final raw = prefs.getString(_kAnggotaKeluargaKey);
+  if (raw == null) return;
+
+  try {
+    final List<dynamic> list = jsonDecode(raw);
+    daftarAnggotaKeluarga = list
+        .map((m) => AnggotaKeluarga(
+              nama: m['nama'] as String,
+              inisial: m['inisial'] as String,
+              totalObat: m['totalObat'] as int,
+              sudahDiminum: m['sudahDiminum'] as int,
+            ))
+        .toList();
+    if (daftarAnggotaKeluarga.isEmpty) {
+      daftarAnggotaKeluarga = [anggotaAdek];
+    }
+    anggotaKeluargaNotifier.value = List.from(daftarAnggotaKeluarga);
+  } catch (_) {
+    daftarAnggotaKeluarga = [anggotaAdek];
+    anggotaKeluargaNotifier.value = List.from(daftarAnggotaKeluarga);
   }
 }

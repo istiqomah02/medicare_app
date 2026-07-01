@@ -46,14 +46,6 @@ class PengaturanScreen extends StatelessWidget {
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 14),
-<<<<<<< HEAD
-      child: const Text('Pengaturan',
-          style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: AppColors.slate800,
-              letterSpacing: -0.4)),
-=======
       child: const Text(
         'Pengaturan',
         style: TextStyle(
@@ -63,7 +55,6 @@ class PengaturanScreen extends StatelessWidget {
           letterSpacing: -0.4,
         ),
       ),
->>>>>>> fd75939c4a7ac12299f63ac3c5805c9b4d479688
     );
   }
 
@@ -90,22 +81,6 @@ class PengaturanScreen extends StatelessWidget {
             ),
             child: Row(
               children: [
-<<<<<<< HEAD
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: AppColors.slate800,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Center(
-                    child: Text(inisial,
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700)),
-                  ),
-=======
                 ValueListenableBuilder<String?>(
                   valueListenable: fotoProfilNotifier,
                   builder: (_, path, __) {
@@ -119,7 +94,8 @@ class PengaturanScreen extends StatelessWidget {
                           if (path != null) provider = FileImage(File(path));
                         }
                         return Container(
-                          width: 44, height: 44,
+                          width: 44,
+                          height: 44,
                           decoration: BoxDecoration(
                             color: AppColors.slate800,
                             borderRadius: BorderRadius.circular(12),
@@ -131,13 +107,14 @@ class PengaturanScreen extends StatelessWidget {
                               ? Center(
                                   child: Text(inisial,
                                       style: const TextStyle(
-                                        color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700)))
+                                        color: Colors.white,
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w700)))
                               : null,
                         );
                       },
                     );
                   },
->>>>>>> fd75939c4a7ac12299f63ac3c5805c9b4d479688
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -146,7 +123,6 @@ class PengaturanScreen extends StatelessWidget {
                     children: [
                       Text(nama,
                           style: const TextStyle(
-<<<<<<< HEAD
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
                               color: AppColors.slate800)),
@@ -154,12 +130,6 @@ class PengaturanScreen extends StatelessWidget {
                       Text(email,
                           style: const TextStyle(
                               fontSize: 12, color: AppColors.slate400)),
-=======
-                            fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.slate800)),
-                      const SizedBox(height: 2),
-                      Text(email,
-                          style: const TextStyle(fontSize: 12, color: AppColors.slate400)),
->>>>>>> fd75939c4a7ac12299f63ac3c5805c9b4d479688
                     ],
                   ),
                 ),
@@ -273,7 +243,6 @@ class PengaturanScreen extends StatelessWidget {
         child: Row(
           children: [
             Container(
-<<<<<<< HEAD
               width: 40,
               height: 40,
               decoration: BoxDecoration(
@@ -282,25 +251,15 @@ class PengaturanScreen extends StatelessWidget {
               ),
               child: const Icon(Icons.logout_rounded,
                   color: Colors.white, size: 20),
-=======
-              width: 40, height: 40,
-              decoration: BoxDecoration(color: AppColors.red200, borderRadius: BorderRadius.circular(10)),
-              child: const Icon(Icons.logout_rounded, color: Colors.white, size: 20),
->>>>>>> fd75939c4a7ac12299f63ac3c5805c9b4d479688
             ),
             const SizedBox(width: 12),
             const Expanded(
               child: Text('KELUAR',
                   style: TextStyle(
-<<<<<<< HEAD
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
                       color: AppColors.red400,
                       letterSpacing: 0.5)),
-=======
-                    fontSize: 15, fontWeight: FontWeight.w700,
-                    color: AppColors.red400, letterSpacing: 0.5)),
->>>>>>> fd75939c4a7ac12299f63ac3c5805c9b4d479688
             ),
             const Icon(Icons.chevron_right, color: AppColors.red400),
           ],
@@ -309,22 +268,6 @@ class PengaturanScreen extends StatelessWidget {
     );
   }
 
-<<<<<<< HEAD
-class _SectionLabel extends StatelessWidget {
-  final String text;
-  const _SectionLabel({required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
-      child: Text(text,
-          style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: AppColors.slate400,
-              letterSpacing: 0.8)),
-=======
   void _showKonfirmasiKeluar(BuildContext context) {
     showDialog(
       context: context,
@@ -375,7 +318,24 @@ class _SectionLabel extends StatelessWidget {
           ),
         ],
       ),
->>>>>>> fd75939c4a7ac12299f63ac3c5805c9b4d479688
+    );
+  }
+}
+
+class _SectionLabel extends StatelessWidget {
+  final String text;
+  const _SectionLabel({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
+      child: Text(text,
+          style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: AppColors.slate400,
+              letterSpacing: 0.8)),
     );
   }
 }
@@ -443,13 +403,9 @@ class _NotifikasiCardState extends State<_NotifikasiCard> {
                         children: [
                           Text(item.title,
                               style: const TextStyle(
-<<<<<<< HEAD
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.slate800)),
-=======
-                                fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.slate800)),
->>>>>>> fd75939c4a7ac12299f63ac3c5805c9b4d479688
                           const SizedBox(height: 2),
                           Text(item.sub,
                               style: const TextStyle(

@@ -9,18 +9,15 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  
+
   # UI & Icons
   cupertino_icons: ^1.0.8
-<<<<<<< HEAD
-  
+
   # Utility
-  uuid: ^4.3.3          # Untuk generate ID unik
-  intl: ^0.18.1         # Untuk formatting tanggal dan waktu
-  shared_preferences: ^2.2.3  # Untuk menyimpan data lokal (opsional)
-=======
-  image_picker: ^1.0.7
->>>>>>> fd75939c4a7ac12299f63ac3c5805c9b4d479688
+  uuid: ^4.3.3                # Untuk generate ID unik
+  intl: ^0.18.1                # Untuk formatting tanggal dan waktu
+  shared_preferences: ^2.2.3   # Untuk menyimpan data lokal
+  image_picker: ^1.0.7         # Untuk pilih/ambil foto profil
 
 dev_dependencies:
   flutter_test:
@@ -29,19 +26,3 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  
-  # Jika ada assets (font, gambar, dll)
-  # assets:
-  #   - assets/images/
-  #   - assets/icons/
-  
-  # fonts:
-  #   - family: Inter
-  #     fonts:
-  #       - asset: assets/fonts/Inter-Regular.ttf
-  #       - asset: assets/fonts/Inter-Medium.ttf
-  #         weight: 500
-  #       - asset: assets/fonts/Inter-SemiBold.ttf
-  #         weight: 600
-  #       - asset: assets/fonts/Inter-Bold.ttf
-  #         weight: 700

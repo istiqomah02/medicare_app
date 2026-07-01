@@ -280,69 +280,79 @@ class ProgressCard extends StatelessWidget {
 
 class KeluargaCard extends StatelessWidget {
   final AnggotaKeluarga anggota;
+  final VoidCallback? onTap;
 
-  const KeluargaCard({super.key, required this.anggota});
+  const KeluargaCard({super.key, required this.anggota, this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.slate100, width: 0.5),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: AppColors.purple100,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Center(
-              child: Text(anggota.inisial,
-                  style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.purple600)),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(anggota.nama,
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.slate100, width: 0.5),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: AppColors.purple100,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Center(
+                child: Text(anggota.inisial,
                     style: const TextStyle(
-                        fontSize: 14,
+                        fontSize: 18,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.slate800)),
-                const SizedBox(height: 2),
-                Text('${anggota.sudahDiminum}/${anggota.totalObat} obat',
-                    style: const TextStyle(
-                        fontSize: 12, color: AppColors.slate400)),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppColors.purple50,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              '${anggota.belum} tersisa',
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: AppColors.purple600,
+                        color: AppColors.purple600)),
               ),
             ),
-          ),
-        ],
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(anggota.nama,
+                      style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.slate800)),
+                  const SizedBox(height: 2),
+                  Text('${anggota.sudahDiminum}/${anggota.totalObat} obat',
+                      style: const TextStyle(
+                          fontSize: 12, color: AppColors.slate400)),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.purple50,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                '${anggota.belum} tersisa',
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.purple600,
+                ),
+              ),
+            ),
+            if (onTap != null) ...[
+              const SizedBox(width: 4),
+              const Icon(Icons.chevron_right,
+                  size: 18, color: AppColors.slate400),
+            ],
+          ],
+        ),
       ),
     );
   }

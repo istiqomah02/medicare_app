@@ -3,7 +3,12 @@ import '../app_theme.dart';
 import '../models/obat_model.dart';
 
 class RiwayatScreen extends StatelessWidget {
-  const RiwayatScreen({super.key});
+  // Callback opsional untuk pindah tab ke Beranda.
+  // Diisi oleh MainNavigation karena RiwayatScreen adalah salah satu tab,
+  // bukan halaman yang di-push, sehingga Navigator.pop tidak berlaku di sini.
+  final VoidCallback? onKembali;
+
+  const RiwayatScreen({super.key, this.onKembali});
 
   @override
   Widget build(BuildContext context) {
@@ -13,7 +18,7 @@ class RiwayatScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildHeader(),
+            _buildHeader(context),
             Expanded(
               child: ValueListenableBuilder<List<Obat>>(
                 valueListenable: obatNotifier,
@@ -72,22 +77,39 @@ class RiwayatScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
     return Container(
       color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(20, 10, 20, 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
-          Text('Riwayat',
-              style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.slate800,
-                  letterSpacing: -0.4)),
-          SizedBox(height: 2),
-          Text('7 Hari terakhir',
-              style: TextStyle(fontSize: 12, color: AppColors.slate400)),
+      padding: const EdgeInsets.fromLTRB(8, 10, 20, 14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          IconButton(
+            onPressed: () {
+              if (onKembali != null) {
+                onKembali!();
+              } else {
+                Navigator.maybePop(context);
+              }
+            },
+            icon: const Icon(Icons.arrow_back_ios_new,
+                size: 18, color: AppColors.slate800),
+          ),
+          const SizedBox(width: 4),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text('Riwayat',
+                  style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.slate800,
+                      letterSpacing: -0.4)),
+              SizedBox(height: 2),
+              Text('7 Hari terakhir',
+                  style: TextStyle(fontSize: 12, color: AppColors.slate400)),
+            ],
+          ),
         ],
       ),
     );

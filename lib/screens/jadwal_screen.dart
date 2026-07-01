@@ -91,11 +91,21 @@ class _JadwalScreenState extends State<JadwalScreen> {
     return DateTime(_baseMonth.year, _baseMonth.month + (index - _pageMid), 1);
   }
 
-  // Dummy indikator: tanggal yang ada jadwal minum obat ditandai titik.
-  // Warna amber = perlu perhatian (mis. stok menipis), hijau = aman.
-  // Ganti logika ini dengan data jadwal obat asli per tanggal jika sudah ada.
-  Color _dotColorFor(DateTime date) {
-    return date.day % 3 == 0 ? AppColors.amber400 : AppColors.green400;
+  // Indikator berdasarkan data obat asli:
+  // - Lihat obat apa saja yang dijadwalkan pada hari tersebut (field `hari` di Obat).
+  // - Jika tidak ada obat yang dijadwalkan di hari itu -> tidak ada titik (null).
+  // - Jika ada obat dengan stok menipis (stokHariLagi <= 7) -> kuning (perlu perhatian).
+  // - Jika semua obat di hari itu stoknya masih aman -> hijau (aman).
+  Color? _dotColorFor(DateTime date) {
+    final String namaHari = _hariLabel[date.weekday - 1];
+    final List<Obat> obatHariIni =
+        daftarObat.where((o) => o.hari.contains(namaHari)).toList();
+
+    if (obatHariIni.isEmpty) return null;
+
+    final bool adaStokMenipis =
+        obatHariIni.any((o) => o.stokHariLagi <= 7);
+    return adaStokMenipis ? AppColors.amber400 : AppColors.green400;
   }
 
   String _formatSelectedDate() {
@@ -259,14 +269,51 @@ class _JadwalScreenState extends State<JadwalScreen> {
   Widget _buildCalendarStrip() {
     return Container(
       color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
-      child: AnimatedSize(
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeInOut,
-        alignment: Alignment.topCenter,
-        child:
-            _isCalendarExpanded ? _buildExpandedCalendar() : _buildWeekStrip(),
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+      child: Column(
+        children: [
+          AnimatedSize(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeInOut,
+            alignment: Alignment.topCenter,
+            child: _isCalendarExpanded
+                ? _buildExpandedCalendar()
+                : _buildWeekStrip(),
+          ),
+          const SizedBox(height: 10),
+          _buildLegenda(),
+        ],
       ),
+    );
+  }
+
+  // Legenda arti warna titik di kalender, supaya pengguna tidak menebak-nebak.
+  Widget _buildLegenda() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        _legendaItem(AppColors.green400, 'Stok aman'),
+        const SizedBox(width: 16),
+        _legendaItem(AppColors.amber400, 'Stok menipis'),
+      ],
+    );
+  }
+
+  Widget _legendaItem(Color color, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 7,
+          height: 7,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 5),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 11, color: AppColors.slate400),
+        ),
+      ],
     );
   }
 
@@ -280,7 +327,7 @@ class _JadwalScreenState extends State<JadwalScreen> {
         children: List.generate(7, (i) {
           final DateTime date = week[i];
           final bool active = _isSameDate(date, _selectedDate);
-          final Color dotColor = _dotColorFor(date);
+          final Color? dotColor = _dotColorFor(date);
 
           return GestureDetector(
             onTap: () => setState(() => _selectedDate = date),
@@ -304,7 +351,7 @@ class _JadwalScreenState extends State<JadwalScreen> {
                       style: const TextStyle(
                           fontSize: 10, color: AppColors.slate400)),
                   const SizedBox(height: 3),
-                  if (!active)
+                  if (!active && dotColor != null)
                     Container(
                       width: 5,
                       height: 5,
@@ -390,7 +437,7 @@ class _JadwalScreenState extends State<JadwalScreen> {
 
       final DateTime date = DateTime(month.year, month.month, dayNum);
       final bool active = _isSameDate(date, _selectedDate);
-      final Color dotColor = _dotColorFor(date);
+      final Color? dotColor = _dotColorFor(date);
 
       cells.add(
         Expanded(
@@ -414,7 +461,7 @@ class _JadwalScreenState extends State<JadwalScreen> {
                     ),
                   ),
                   const SizedBox(height: 3),
-                  if (!active)
+                  if (!active && dotColor != null)
                     Container(
                       width: 5,
                       height: 5,
