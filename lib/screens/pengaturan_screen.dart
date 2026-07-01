@@ -62,8 +62,8 @@ class PengaturanScreen extends StatelessWidget {
     return ValueListenableBuilder<UserAccount?>(
       valueListenable: currentUserNotifier,
       builder: (context, akun, _) {
-        final nama  = akun?.nama    ?? 'Tamu';
-        final email = akun?.email   ?? '-';
+        final nama = akun?.nama ?? 'Tamu';
+        final email = akun?.email ?? '-';
         final inisial = akun?.inisial ?? '?';
         return InkWell(
           borderRadius: BorderRadius.circular(14),
@@ -100,16 +100,17 @@ class PengaturanScreen extends StatelessWidget {
                             color: AppColors.slate800,
                             borderRadius: BorderRadius.circular(12),
                             image: provider != null
-                                ? DecorationImage(image: provider, fit: BoxFit.cover)
+                                ? DecorationImage(
+                                    image: provider, fit: BoxFit.cover)
                                 : null,
                           ),
                           child: provider == null
                               ? Center(
                                   child: Text(inisial,
                                       style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w700)))
+                                          color: Colors.white,
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w700)))
                               : null,
                         );
                       },
@@ -162,7 +163,11 @@ class PengaturanScreen extends StatelessWidget {
               MaterialPageRoute(builder: (_) => const UbahKataSandiScreen()),
             ),
           ),
-          const Divider(height: 0.5, indent: 16, endIndent: 16, color: AppColors.slate100),
+          const Divider(
+              height: 0.5,
+              indent: 16,
+              endIndent: 16,
+              color: AppColors.slate100),
           _buildMenuRow(
             icon: Icons.manage_accounts_rounded,
             iconBg: const Color(0xFFB5C99A),
@@ -193,8 +198,11 @@ class PengaturanScreen extends StatelessWidget {
         child: Row(
           children: [
             Container(
-              width: 40, height: 40,
-              decoration: BoxDecoration(color: iconBg, borderRadius: BorderRadius.circular(10)),
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                  color: iconBg,
+                  borderRadius: BorderRadius.circular(10)),
               child: Icon(icon, color: Colors.white, size: 20),
             ),
             const SizedBox(width: 12),
@@ -204,9 +212,13 @@ class PengaturanScreen extends StatelessWidget {
                 children: [
                   Text(title,
                       style: const TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.slate800)),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.slate800)),
                   const SizedBox(height: 2),
-                  Text(sub, style: const TextStyle(fontSize: 12, color: AppColors.slate400)),
+                  Text(sub,
+                      style: const TextStyle(
+                          fontSize: 12, color: AppColors.slate400)),
                 ],
               ),
             ),
@@ -219,12 +231,21 @@ class PengaturanScreen extends StatelessWidget {
 
   Widget _buildNotifCard() {
     final items = [
-      _NotifItem(icon: Icons.notifications_rounded, color: const Color(0xFFB5C99A),
-          title: 'Pengingat Minum Obat', sub: '15 menit sebelumnya'),
-      _NotifItem(icon: Icons.priority_high_rounded, color: const Color(0xFFD4B96A),
-          title: 'Pengingat Stok Abis', sub: 'Saat stok < 7 hari'),
-      _NotifItem(icon: Icons.people_alt_rounded, color: AppColors.purple200,
-          title: 'Notifikasi Keluarga', sub: 'Update status anggota'),
+      _NotifItem(
+          icon: Icons.notifications_rounded,
+          color: const Color(0xFFB5C99A),
+          title: 'Pengingat Minum Obat',
+          sub: '15 menit sebelumnya'),
+      _NotifItem(
+          icon: Icons.priority_high_rounded,
+          color: const Color(0xFFD4B96A),
+          title: 'Pengingat Stok Abis',
+          sub: 'Saat stok < 7 hari'),
+      _NotifItem(
+          icon: Icons.people_alt_rounded,
+          color: AppColors.purple200,
+          title: 'Notifikasi Keluarga',
+          sub: 'Update status anggota'),
     ];
     return _NotifikasiCard(items: items);
   }
@@ -246,9 +267,8 @@ class PengaturanScreen extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: AppColors.red200,
-                borderRadius: BorderRadius.circular(10),
-              ),
+                  color: AppColors.red200,
+                  borderRadius: BorderRadius.circular(10)),
               child: const Icon(Icons.logout_rounded,
                   color: Colors.white, size: 20),
             ),
@@ -272,70 +292,65 @@ class PengaturanScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Yakin mau keluar?',
-            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.slate800)),
+            style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 16,
+                color: AppColors.slate800)),
         content: const Text(
           'Kamu perlu masuk lagi untuk mengakses akun ini.',
           style: TextStyle(fontSize: 13, color: AppColors.slate400),
         ),
         actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
         actions: [
-          Expanded(
-            child: OutlinedButton(
-              onPressed: () => Navigator.pop(context),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.slate800,
-                side: const BorderSide(color: AppColors.slate100),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.slate800,
+                    side: const BorderSide(color: AppColors.slate100),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text('Batal',
+                      style: TextStyle(
+                          fontWeight: FontWeight.w600, fontSize: 13)),
+                ),
               ),
-              child: const Text('Batal',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context); // tutup dialog dulu
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (_) => const LoginScreen()),
-                  (route) => false,
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.red400,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const LoginScreen()),
+                      (route) => false,
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.red400,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text('Ya, Keluar',
+                      style: TextStyle(
+                          fontWeight: FontWeight.w700, fontSize: 13)),
+                ),
               ),
-              child: const Text('Ya, Keluar',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-            ),
+            ],
           ),
         ],
       ),
-    );
-  }
-}
-
-class _SectionLabel extends StatelessWidget {
-  final String text;
-  const _SectionLabel({required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
-      child: Text(text,
-          style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: AppColors.slate400,
-              letterSpacing: 0.8)),
     );
   }
 }
@@ -379,7 +394,7 @@ class _NotifikasiCardState extends State<_NotifikasiCard> {
       ),
       child: Column(
         children: widget.items.asMap().entries.map((entry) {
-          final i    = entry.key;
+          final i = entry.key;
           final item = entry.value;
           final isLast = i == widget.items.length - 1;
           return Column(
@@ -393,7 +408,8 @@ class _NotifikasiCardState extends State<_NotifikasiCard> {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                          color: item.color, borderRadius: BorderRadius.circular(10)),
+                          color: item.color,
+                          borderRadius: BorderRadius.circular(10)),
                       child: Icon(item.icon, color: Colors.white, size: 20),
                     ),
                     const SizedBox(width: 12),
