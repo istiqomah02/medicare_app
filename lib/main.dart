@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app_theme.dart';
 import 'models/obat_model.dart';
 import 'models/user_model.dart';
@@ -8,20 +9,29 @@ import 'screens/beranda_screen.dart';
 import 'screens/jadwal_screen.dart';
 import 'screens/riwayat_screen.dart';
 import 'screens/pengaturan_screen.dart';
+import 'services/supabase_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // INI PENTING: Inisialisasi data dummy
+  await Supabase.initialize(
+    url: 'https://bgfetforflgfjrcbajyp.supabase.co',
+    anonKey:
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJnZmV0Zm9yZmxnZmpyY2JhanlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5ODc5MDYsImV4cCI6MjA5ODU2MzkwNn0.APewImr5TGqhQemDoCgPwMrjP5xiQZq-fBgNtRiK-1s',
+  );
+
   initDummyData();
+  await muatAnggotaKeluargaDariDB();
+  await muatSemuaAkunDariDB();
 
-  // Muat data anggota keluarga yang tersimpan sebelumnya
-  await muatAnggotaKeluarga();
-
-  // Set default user
   if (daftarAkun.isNotEmpty) {
     akunTerakhirLogin = daftarAkun.first;
     currentUserNotifier.value = daftarAkun.first;
+    print('DEBUG main: user aktif = ${daftarAkun.first.email}');
+    await muatObatDariDB(daftarAkun.first.email);
+  } else {
+    await simpanAkunLogin('cahyaniarum@gmail.com', nama: 'Nayla');
+    print('DEBUG main: fallback login cahyaniarum@gmail.com');
   }
 
   SystemChrome.setSystemUIOverlayStyle(
@@ -33,6 +43,8 @@ void main() async {
 
   runApp(const MediCareApp());
 }
+
+final supabase = Supabase.instance.client;
 
 class MediCareApp extends StatelessWidget {
   const MediCareApp({super.key});
@@ -58,10 +70,6 @@ class MainNavigation extends StatefulWidget {
 class _MainNavigationState extends State<MainNavigation> {
   int _currentIndex = 0;
 
-  // Dipindah dari const List ke late final List karena RiwayatScreen
-  // sekarang butuh callback (onKembali) untuk pindah tab ke Beranda,
-  // bukan lagi memakai Navigator.pop yang menyebabkan layar putih kosong
-  // (karena RiwayatScreen adalah tab, bukan halaman yang di-push).
   late final List<Widget> _pages = [
     const BerandaScreen(),
     const JadwalScreen(),
@@ -101,22 +109,22 @@ class _MainNavigationState extends State<MainNavigation> {
             BottomNavigationBarItem(
               icon: Icon(Icons.home_outlined),
               activeIcon: Icon(Icons.home),
-              label: 'Beranda'
+              label: 'Beranda',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.calendar_today_outlined),
               activeIcon: Icon(Icons.calendar_today),
-              label: 'Jadwal'
+              label: 'Jadwal',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.bar_chart_outlined),
               activeIcon: Icon(Icons.bar_chart),
-              label: 'Riwayat'
+              label: 'Riwayat',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.settings_outlined),
               activeIcon: Icon(Icons.settings),
-              label: 'Pengaturan'
+              label: 'Pengaturan',
             ),
           ],
         ),

@@ -18,6 +18,7 @@ dependencies:
   intl: ^0.18.1                # Untuk formatting tanggal dan waktu
   shared_preferences: ^2.2.3   # Untuk menyimpan data lokal
   image_picker: ^1.0.7         # Untuk pilih/ambil foto profil
+  supabase_flutter: ^2.15.3
 
 dev_dependencies:
   flutter_test:

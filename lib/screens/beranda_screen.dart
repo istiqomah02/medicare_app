@@ -6,6 +6,7 @@ import 'tambah_obat_screen.dart';
 import 'riwayat_screen.dart';
 import 'notifikasi_screen.dart';
 import 'keluarga_screen.dart';
+import 'detail_anggota_screen.dart';
 
 class BerandaScreen extends StatelessWidget {
   const BerandaScreen({super.key});
@@ -35,8 +36,7 @@ class BerandaScreen extends StatelessWidget {
                       ProgressCard(done: sudah, total: daftarObat.length),
                       if (daftarObat.isEmpty) _buildEmptyState(context),
                       ..._buildObatSections(daftarObat),
-                      SectionLabel(text: 'KELUARGA'),
-                      KeluargaCard(anggota: anggotaAdek),
+                      _buildKeluargaSection(context),
                     ],
                   );
                 },
@@ -45,6 +45,32 @@ class BerandaScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildKeluargaSection(BuildContext context) {
+    return ValueListenableBuilder<List<AnggotaKeluarga>>(
+      valueListenable: anggotaKeluargaNotifier,
+      builder: (context, daftarAnggota, _) {
+        if (daftarAnggota.isEmpty) return const SizedBox.shrink();
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SectionLabel(text: 'KELUARGA'),
+            ...daftarAnggota.map((a) => KeluargaCard(
+                  anggota: a,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => DetailAnggotaScreen(anggota: a),
+                      ),
+                    );
+                  },
+                )),
+          ],
+        );
+      },
     );
   }
 

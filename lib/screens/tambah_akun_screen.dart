@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import '../app_theme.dart';
 import '../models/user_model.dart';
 
-/// Layar untuk berpindah ke akun lain yang sudah tersimpan, atau
-/// menambahkan akun baru. Dibuka dari kartu profil di PengaturanScreen.
 class TambahAkunScreen extends StatelessWidget {
   const TambahAkunScreen({super.key});
 
@@ -57,12 +55,6 @@ class TambahAkunScreen extends StatelessWidget {
     );
   }
 
-  /// Reaktif terhadap currentUserNotifier, supaya tanda "akun aktif"
-  /// langsung berubah begitu user menekan akun lain.
-  ///
-  /// Dibungkus juga dengan ValueListenableBuilder pada daftarAkunNotifier,
-  /// supaya daftar otomatis bertambah begitu ada akun baru ditambahkan
-  /// lewat popup "Tambah Akun Baru".
   Widget _buildDaftarAkun(BuildContext context) {
     return ValueListenableBuilder<List<UserAccount>>(
       valueListenable: daftarAkunNotifier,
@@ -82,16 +74,17 @@ class TambahAkunScreen extends StatelessWidget {
                   final akun = entry.value;
                   final isLast = i == daftar.length - 1;
                   final aktif = akunAktif != null &&
-                      akunAktif.email.toLowerCase() == akun.email.toLowerCase();
+                      akunAktif.email.toLowerCase() ==
+                          akun.email.toLowerCase();
 
                   return Column(
                     children: [
                       InkWell(
                         onTap: aktif
                             ? null
-                            : () {
-                                simpanAkunLogin(akun.email);
-                                Navigator.pop(context);
+                            : () async {
+                                await simpanAkunLogin(akun.email);
+                                if (context.mounted) Navigator.pop(context);
                               },
                         child: Padding(
                           padding: const EdgeInsets.symmetric(
@@ -205,8 +198,6 @@ class TambahAkunScreen extends StatelessWidget {
   }
 }
 
-/// Popup mengambang untuk menambahkan akun baru (email + kata sandi saja).
-/// Nama otomatis mengikuti email (dianggap sudah "terdaftar" sebelumnya).
 class _TambahAkunDialog extends StatefulWidget {
   const _TambahAkunDialog();
 
@@ -218,9 +209,11 @@ class _TambahAkunDialogState extends State<_TambahAkunDialog> {
   final _emailCon = TextEditingController();
   final _sandiCon = TextEditingController();
   bool _showSandi = false;
+  bool _isLoading = false;
   String? _errorText;
 
-  void _simpan() {
+  // Dijadikan async karena tambahAkunTanpaLogin sekarang Future
+  Future<void> _simpan() async {
     final email = _emailCon.text.trim();
     final sandi = _sandiCon.text.trim();
 
@@ -233,7 +226,17 @@ class _TambahAkunDialogState extends State<_TambahAkunDialog> {
       return;
     }
 
-    final berhasil = tambahAkunTanpaLogin(email, sandi);
+    setState(() {
+      _isLoading = true;
+      _errorText = null;
+    });
+
+    final berhasil = await tambahAkunTanpaLogin(email, sandi);
+
+    if (!mounted) return;
+
+    setState(() => _isLoading = false);
+
     if (!berhasil) {
       setState(() => _errorText = 'Akun dengan email ini sudah ada');
       return;
@@ -263,7 +266,8 @@ class _TambahAkunDialogState extends State<_TambahAkunDialog> {
             Row(
               children: [
                 Container(
-                  width: 36, height: 36,
+                  width: 36,
+                  height: 36,
                   decoration: BoxDecoration(
                     color: AppColors.slate800,
                     borderRadius: BorderRadius.circular(10),
@@ -289,11 +293,10 @@ class _TambahAkunDialogState extends State<_TambahAkunDialog> {
             const SizedBox(height: 6),
             const Text(
               'Masukkan email & kata sandi akun keluarga yang ingin ditambahkan',
-              style: TextStyle(fontSize: 12.5, color: AppColors.slate400, height: 1.4),
+              style: TextStyle(
+                  fontSize: 12.5, color: AppColors.slate400, height: 1.4),
             ),
             const SizedBox(height: 18),
-
-            // Email
             _buildLabel('EMAIL'),
             const SizedBox(height: 6),
             _buildBoxedField(
@@ -301,7 +304,9 @@ class _TambahAkunDialogState extends State<_TambahAkunDialog> {
                 controller: _emailCon,
                 keyboardType: TextInputType.emailAddress,
                 style: const TextStyle(
-                  fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.slate800),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.slate800),
                 decoration: const InputDecoration(
                   isDense: true,
                   border: InputBorder.none,
@@ -310,10 +315,7 @@ class _TambahAkunDialogState extends State<_TambahAkunDialog> {
                 ),
               ),
             ),
-
             const SizedBox(height: 14),
-
-            // Kata Sandi
             _buildLabel('KATA SANDI'),
             const SizedBox(height: 6),
             _buildBoxedField(
@@ -324,7 +326,9 @@ class _TambahAkunDialogState extends State<_TambahAkunDialog> {
                       controller: _sandiCon,
                       obscureText: !_showSandi,
                       style: const TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.slate800),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.slate800),
                       decoration: const InputDecoration(
                         isDense: true,
                         border: InputBorder.none,
@@ -339,26 +343,27 @@ class _TambahAkunDialogState extends State<_TambahAkunDialog> {
                       _showSandi
                           ? Icons.visibility_off_rounded
                           : Icons.visibility_rounded,
-                      color: AppColors.slate400, size: 18,
+                      color: AppColors.slate400,
+                      size: 18,
                     ),
                   ),
                 ],
               ),
             ),
-
             if (_errorText != null) ...[
               const SizedBox(height: 10),
               Text(_errorText!,
                   style: const TextStyle(
-                    fontSize: 12, color: AppColors.red400, fontWeight: FontWeight.w600)),
+                      fontSize: 12,
+                      color: AppColors.red400,
+                      fontWeight: FontWeight.w600)),
             ],
-
             const SizedBox(height: 20),
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: _isLoading ? null : () => Navigator.pop(context),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.slate800,
                       side: const BorderSide(color: AppColors.slate100),
@@ -367,13 +372,14 @@ class _TambahAkunDialogState extends State<_TambahAkunDialog> {
                           borderRadius: BorderRadius.circular(10)),
                     ),
                     child: const Text('Batal',
-                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                        style: TextStyle(
+                            fontWeight: FontWeight.w600, fontSize: 13)),
                   ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: _simpan,
+                    onPressed: _isLoading ? null : _simpan,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.slate800,
                       foregroundColor: Colors.white,
@@ -382,8 +388,18 @@ class _TambahAkunDialogState extends State<_TambahAkunDialog> {
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10)),
                     ),
-                    child: const Text('Simpan',
-                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                    child: _isLoading
+                        ? const SizedBox(
+                            height: 16,
+                            width: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text('Simpan',
+                            style: TextStyle(
+                                fontWeight: FontWeight.w700, fontSize: 13)),
                   ),
                 ),
               ],
@@ -396,8 +412,10 @@ class _TambahAkunDialogState extends State<_TambahAkunDialog> {
 
   Widget _buildLabel(String text) => Text(text,
       style: const TextStyle(
-        fontSize: 10.5, fontWeight: FontWeight.w700,
-        color: AppColors.slate400, letterSpacing: 0.6));
+          fontSize: 10.5,
+          fontWeight: FontWeight.w700,
+          color: AppColors.slate400,
+          letterSpacing: 0.6));
 
   Widget _buildBoxedField({required Widget child}) {
     return Container(

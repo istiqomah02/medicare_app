@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../app_theme.dart';
 import '../models/obat_model.dart';
+import '../services/supabase_service.dart';
+import '../models/user_model.dart';
 
 class ObatCard extends StatelessWidget {
   final Obat obat;
@@ -67,7 +69,7 @@ class ObatCard extends StatelessWidget {
                   const SizedBox(height: 2),
                   Row(
                     children: [
-                      Icon(Icons.warning_amber,
+                      const Icon(Icons.warning_amber,
                           size: 12, color: AppColors.amber400),
                       const SizedBox(width: 4),
                       Text(
@@ -88,7 +90,8 @@ class ObatCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: _getStatusColor(obat.status).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(6),
@@ -105,8 +108,25 @@ class ObatCard extends StatelessWidget {
               const SizedBox(height: 4),
               if (obat.status == MedStatus.belum)
                 GestureDetector(
-                  onTap: () {
+                  onTap: () async {
+                    // Update status lokal
                     updateStatusObat(obat.id, MedStatus.sudah);
+
+                    // Simpan ke Supabase riwayat_minum
+                    try {
+                      final email = currentUserNotifier.value?.email;
+                      if (email != null) {
+                        await simpanRiwayatMinum(
+                          obatId: obat.id,
+                          userEmail: email,
+                          tanggal: DateTime.now(),
+                          status: 'sudah',
+                        );
+                        print('DEBUG: riwayat minum tersimpan untuk ${obat.nama}');
+                      }
+                    } catch (e) {
+                      print('DEBUG ERROR riwayat: $e');
+                    }
                   },
                   child: Container(
                     padding: const EdgeInsets.symmetric(
@@ -269,7 +289,8 @@ class ProgressCard extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                       color: Colors.white70)),
               Text('${total - done} obat lagi perlu diminum',
-                  style: const TextStyle(fontSize: 11, color: Colors.white54)),
+                  style:
+                      const TextStyle(fontSize: 11, color: Colors.white54)),
             ],
           ),
         ],
@@ -332,7 +353,8 @@ class KeluargaCard extends StatelessWidget {
               ),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 color: AppColors.purple50,
                 borderRadius: BorderRadius.circular(8),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../app_theme.dart';
 import '../models/obat_model.dart';
+import 'tambah_obat_screen.dart';
 
 class DetailAnggotaScreen extends StatelessWidget {
   final AnggotaKeluarga anggota;
@@ -11,20 +12,71 @@ class DetailAnggotaScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.slate50,
       body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(context),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  _buildProfilRingkas(),
-                  const SizedBox(height: 16),
-                  _buildStatCard(),
-                ],
-              ),
-            ),
-          ],
+        child: ValueListenableBuilder<List<Obat>>(
+          valueListenable: obatNotifier,
+          builder: (context, semuaObat, _) {
+            final obatAnggota =
+                semuaObat.where((o) => o.anggotaId == anggota.id).toList();
+            final total = obatAnggota.length;
+            final sudah = obatAnggota
+                .where((o) => o.status == MedStatus.sudah)
+                .length;
+            final belum = total - sudah;
+            final persentase = total > 0 ? ((sudah / total) * 100).round() : 0;
+
+            return Column(
+              children: [
+                _buildHeader(context),
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.all(16),
+                    children: [
+                      _buildProfilRingkas(persentase),
+                      const SizedBox(height: 16),
+                      _buildStatCard(total, sudah, belum, persentase),
+                      const SizedBox(height: 20),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text('Daftar Obat',
+                              style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.slate800)),
+                          GestureDetector(
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    TambahObatScreen(anggotaAwal: anggota),
+                              ),
+                            ),
+                            child: Row(
+                              children: const [
+                                Icon(Icons.add_circle_outline,
+                                    size: 18, color: AppColors.purple600),
+                                SizedBox(width: 4),
+                                Text('Tambah Obat',
+                                    style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.purple600)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      if (obatAnggota.isEmpty)
+                        _buildEmptyObat(context)
+                      else
+                        ...obatAnggota.map((o) => _obatCard(o)),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -52,7 +104,7 @@ class DetailAnggotaScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildProfilRingkas() {
+  Widget _buildProfilRingkas(int persentase) {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -88,7 +140,7 @@ class DetailAnggotaScreen extends StatelessWidget {
                         fontWeight: FontWeight.w700,
                         color: AppColors.slate800)),
                 const SizedBox(height: 4),
-                Text('Kepatuhan minum obat: ${anggota.persentase}%',
+                Text('Kepatuhan minum obat: $persentase%',
                     style: const TextStyle(
                         fontSize: 12, color: AppColors.slate400)),
               ],
@@ -99,7 +151,7 @@ class DetailAnggotaScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatCard() {
+  Widget _buildStatCard(int total, int sudah, int belum, int persentase) {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -114,7 +166,7 @@ class DetailAnggotaScreen extends StatelessWidget {
               Expanded(
                 child: _statItem(
                   label: 'Total Obat',
-                  value: '${anggota.totalObat}',
+                  value: '$total',
                   color: AppColors.slate600,
                   icon: Icons.medication_outlined,
                 ),
@@ -123,7 +175,7 @@ class DetailAnggotaScreen extends StatelessWidget {
               Expanded(
                 child: _statItem(
                   label: 'Sudah Diminum',
-                  value: '${anggota.sudahDiminum}',
+                  value: '$sudah',
                   color: AppColors.green400,
                   icon: Icons.check_circle_outline,
                 ),
@@ -132,7 +184,7 @@ class DetailAnggotaScreen extends StatelessWidget {
               Expanded(
                 child: _statItem(
                   label: 'Belum Diminum',
-                  value: '${anggota.belum}',
+                  value: '$belum',
                   color: AppColors.amber400,
                   icon: Icons.pending_outlined,
                 ),
@@ -143,9 +195,7 @@ class DetailAnggotaScreen extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
             child: LinearProgressIndicator(
-              value: anggota.totalObat > 0
-                  ? anggota.sudahDiminum / anggota.totalObat
-                  : 0,
+              value: total > 0 ? sudah / total : 0,
               minHeight: 10,
               backgroundColor: AppColors.slate100,
               valueColor:
@@ -155,7 +205,7 @@ class DetailAnggotaScreen extends StatelessWidget {
           const SizedBox(height: 8),
           Align(
             alignment: Alignment.centerRight,
-            child: Text('${anggota.persentase}% kepatuhan hari ini',
+            child: Text('$persentase% kepatuhan hari ini',
                 style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -184,6 +234,84 @@ class DetailAnggotaScreen extends StatelessWidget {
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: 11, color: AppColors.slate400)),
       ],
+    );
+  }
+
+  Widget _buildEmptyObat(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 32),
+      alignment: Alignment.center,
+      child: Column(
+        children: [
+          const Icon(Icons.medication_outlined,
+              size: 40, color: AppColors.slate300),
+          const SizedBox(height: 10),
+          Text('Belum ada obat untuk ${anggota.nama}',
+              style: const TextStyle(
+                  fontSize: 13, color: AppColors.slate400)),
+        ],
+      ),
+    );
+  }
+
+  Widget _obatCard(Obat o) {
+    Color statusColor;
+    String statusText;
+    switch (o.status) {
+      case MedStatus.sudah:
+        statusColor = AppColors.green400;
+        statusText = 'Sudah';
+        break;
+      case MedStatus.terlewat:
+        statusColor = AppColors.red400;
+        statusText = 'Terlewat';
+        break;
+      case MedStatus.belum:
+        statusColor = AppColors.amber400;
+        statusText = 'Belum';
+        break;
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.slate100, width: 0.5),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(o.nama,
+                    style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.slate800)),
+                const SizedBox(height: 2),
+                Text('${o.dosis} • ${o.waktu}',
+                    style: const TextStyle(
+                        fontSize: 12, color: AppColors.slate400)),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: statusColor.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(statusText,
+                style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: statusColor)),
+          ),
+        ],
+      ),
     );
   }
 }

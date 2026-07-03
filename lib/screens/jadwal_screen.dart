@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../app_theme.dart';
 import '../models/obat_model.dart';
 import '../widgets/common_widgets.dart';
+import 'detail_anggota_screen.dart';
 
 class JadwalScreen extends StatefulWidget {
   const JadwalScreen({super.key});
@@ -182,8 +183,7 @@ class _JadwalScreenState extends State<JadwalScreen> {
                 padding: const EdgeInsets.only(bottom: 24),
                 children: [
                   ..._buildObatSections(),
-                  const SectionLabel(text: 'KELUARGA'),
-                  KeluargaCard(anggota: anggotaAdek),
+                  _buildKeluargaSection(context),
                   const SectionLabel(text: 'OBAT AKTIF'),
                   _buildObatAktifCard(),
                 ],
@@ -192,6 +192,32 @@ class _JadwalScreenState extends State<JadwalScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildKeluargaSection(BuildContext context) {
+    return ValueListenableBuilder<List<AnggotaKeluarga>>(
+      valueListenable: anggotaKeluargaNotifier,
+      builder: (context, daftarAnggota, _) {
+        if (daftarAnggota.isEmpty) return const SizedBox.shrink();
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SectionLabel(text: 'KELUARGA'),
+            ...daftarAnggota.map((a) => KeluargaCard(
+                  anggota: a,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => DetailAnggotaScreen(anggota: a),
+                      ),
+                    );
+                  },
+                )),
+          ],
+        );
+      },
     );
   }
 
@@ -263,8 +289,6 @@ class _JadwalScreenState extends State<JadwalScreen> {
   }
 
   // ===================== KALENDER =====================
-  // Default: strip 7 hari (ringkas, persis tampilan semula).
-  // Saat baris tanggal di header ditekan -> buka kalender bulan penuh (bisa digeser antar bulan).
 
   Widget _buildCalendarStrip() {
     return Container(
@@ -287,7 +311,6 @@ class _JadwalScreenState extends State<JadwalScreen> {
     );
   }
 
-  // Legenda arti warna titik di kalender, supaya pengguna tidak menebak-nebak.
   Widget _buildLegenda() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,

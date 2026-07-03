@@ -4,7 +4,10 @@ import '../app_theme.dart';
 import '../models/obat_model.dart';
 
 class TambahObatScreen extends StatefulWidget {
-  const TambahObatScreen({super.key});
+  // Kalau dibuka dari DetailAnggotaScreen, isi ini biar langsung ke-set target-nya
+  final AnggotaKeluarga? anggotaAwal;
+
+  const TambahObatScreen({super.key, this.anggotaAwal});
 
   @override
   State<TambahObatScreen> createState() => _TambahObatScreenState();
@@ -17,39 +20,30 @@ class _TambahObatScreenState extends State<TambahObatScreen> {
   String _instruksi = 'Setelah makan';
   final Set<String> _waktuSelected = {'Pagi 08.00'};
   final Set<String> _hariSelected = {
-    'Sen',
-    'Sel',
-    'Rab',
-    'Kam',
-    'Jum',
-    'Sab',
-    'Min'
+    'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'
   };
   bool _notifMinum = true;
   bool _notifStok = true;
   bool _isLoading = false;
 
+  // null = Diri Sendiri
+  String? _anggotaIdTerpilih;
+
   final List<String> _waktuOptions = [
-    'Pagi 08.00',
-    'Siang 13.00',
-    'Sore 17.00',
-    'Malam 20.00'
+    'Pagi 08.00', 'Siang 13.00', 'Sore 17.00', 'Malam 20.00'
   ];
   final List<String> _hariOptions = [
-    'Sen',
-    'Sel',
-    'Rab',
-    'Kam',
-    'Jum',
-    'Sab',
-    'Min'
+    'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'
   ];
   final List<String> _instruksiOptions = [
-    'Setelah makan',
-    'Sebelum makan',
-    'Saat makan',
-    'Bebas'
+    'Setelah makan', 'Sebelum makan', 'Saat makan', 'Bebas'
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _anggotaIdTerpilih = widget.anggotaAwal?.id;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -75,6 +69,8 @@ class _TambahObatScreenState extends State<TambahObatScreen> {
           ListView(
             padding: const EdgeInsets.only(bottom: 100),
             children: [
+              const _SectionLabel(text: 'UNTUK SIAPA'),
+              _buildAnggotaSelector(),
               _buildInfoCard(),
               const _SectionLabel(text: 'WAKTU MINUM'),
               _buildWaktuCard(),
@@ -89,6 +85,68 @@ class _TambahObatScreenState extends State<TambahObatScreen> {
             child: _buildSimpanButton(),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildAnggotaSelector() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.slate100.withOpacity(0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: ValueListenableBuilder<List<AnggotaKeluarga>>(
+        valueListenable: anggotaKeluargaNotifier,
+        builder: (context, daftarAnggota, _) {
+          return Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _chipAnggota(id: null, label: 'Diri Sendiri'),
+              ...daftarAnggota.map(
+                  (a) => _chipAnggota(id: a.id, label: a.nama)),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _chipAnggota({required String? id, required String label}) {
+    final sel = _anggotaIdTerpilih == id;
+    return GestureDetector(
+      onTap: () => setState(() => _anggotaIdTerpilih = id),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: sel ? AppColors.purple600 : AppColors.slate50,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+              color: sel ? AppColors.purple600 : AppColors.slate200,
+              width: 1),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (sel)
+              const Icon(Icons.check_circle, color: Colors.white, size: 14),
+            if (sel) const SizedBox(width: 4),
+            Text(label,
+                style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: sel ? Colors.white : AppColors.slate800)),
+          ],
+        ),
       ),
     );
   }
@@ -123,12 +181,13 @@ class _TambahObatScreenState extends State<TambahObatScreen> {
           Row(
             children: [
               Expanded(
-                  child:
-                      _buildField('Dosis', _dosisCtrl, hint: 'cth. 1 tablet')),
+                  child: _buildField('Dosis', _dosisCtrl,
+                      hint: 'cth. 1 tablet')),
               const SizedBox(width: 12),
               Expanded(
                   child: _buildField('Stok', _stokCtrl,
-                      hint: '30', keyboardType: TextInputType.number)),
+                      hint: '30',
+                      keyboardType: TextInputType.number)),
             ],
           ),
           const SizedBox(height: 14),
@@ -170,7 +229,8 @@ class _TambahObatScreenState extends State<TambahObatScreen> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: AppColors.slate400, width: 1),
+              borderSide:
+                  const BorderSide(color: AppColors.slate400, width: 1),
             ),
           ),
         ),
@@ -203,10 +263,10 @@ class _TambahObatScreenState extends State<TambahObatScreen> {
                         style: const TextStyle(
                             fontSize: 14, color: AppColors.slate800))))
                 .toList(),
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               border: InputBorder.none,
               contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             ),
           ),
         ),
@@ -247,13 +307,15 @@ class _TambahObatScreenState extends State<TambahObatScreen> {
                 onTap: () => setState(() =>
                     sel ? _waktuSelected.remove(w) : _waktuSelected.add(w)),
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
                     color: sel ? AppColors.slate900 : AppColors.slate50,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                        color: sel ? AppColors.slate900 : AppColors.slate200,
+                        color: sel
+                            ? AppColors.slate900
+                            : AppColors.slate200,
                         width: 1),
                   ),
                   child: Row(
@@ -267,7 +329,9 @@ class _TambahObatScreenState extends State<TambahObatScreen> {
                           style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
-                              color: sel ? Colors.white : AppColors.slate800)),
+                              color: sel
+                                  ? Colors.white
+                                  : AppColors.slate800)),
                     ],
                   ),
                 ),
@@ -287,8 +351,8 @@ class _TambahObatScreenState extends State<TambahObatScreen> {
             children: _hariOptions.map((h) {
               final sel = _hariSelected.contains(h);
               return GestureDetector(
-                onTap: () => setState(
-                    () => sel ? _hariSelected.remove(h) : _hariSelected.add(h)),
+                onTap: () => setState(() =>
+                    sel ? _hariSelected.remove(h) : _hariSelected.add(h)),
                 child: Container(
                   width: 38,
                   height: 34,
@@ -296,7 +360,9 @@ class _TambahObatScreenState extends State<TambahObatScreen> {
                     color: sel ? AppColors.slate800 : AppColors.slate50,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                        color: sel ? AppColors.slate800 : AppColors.slate200,
+                        color: sel
+                            ? AppColors.slate800
+                            : AppColors.slate200,
                         width: 1),
                   ),
                   child: Center(
@@ -304,7 +370,9 @@ class _TambahObatScreenState extends State<TambahObatScreen> {
                         style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: sel ? Colors.white : AppColors.slate800)),
+                            color: sel
+                                ? Colors.white
+                                : AppColors.slate800)),
                   ),
                 ),
               );
@@ -372,7 +440,8 @@ class _TambahObatScreenState extends State<TambahObatScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-                color: iconBg, borderRadius: BorderRadius.circular(12)),
+                color: iconBg,
+                borderRadius: BorderRadius.circular(12)),
             child: Icon(icon, color: iconColor, size: 22),
           ),
           const SizedBox(width: 12),
@@ -413,8 +482,8 @@ class _TambahObatScreenState extends State<TambahObatScreen> {
           backgroundColor: AppColors.slate900,
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(vertical: 16),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12)),
           elevation: 0,
           minimumSize: const Size(double.infinity, 0),
         ),
@@ -424,7 +493,8 @@ class _TambahObatScreenState extends State<TambahObatScreen> {
                 width: 20,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  valueColor:
+                      AlwaysStoppedAnimation<Color>(Colors.white),
                 ),
               )
             : const Row(
@@ -433,25 +503,24 @@ class _TambahObatScreenState extends State<TambahObatScreen> {
                   Icon(Icons.add, size: 20),
                   SizedBox(width: 8),
                   Text('Simpan Obat',
-                      style:
-                          TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                      style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700)),
                 ],
               ),
       ),
     );
   }
 
-  void _simpanObat() {
+  Future<void> _simpanObat() async {
     if (_namaCtrl.text.isEmpty) {
       _showSnackbar('Mohon isi nama obat', isError: true);
       return;
     }
-
     if (_dosisCtrl.text.isEmpty) {
       _showSnackbar('Mohon isi dosis', isError: true);
       return;
     }
-
     if (_stokCtrl.text.isEmpty) {
       _showSnackbar('Mohon isi stok', isError: true);
       return;
@@ -459,7 +528,6 @@ class _TambahObatScreenState extends State<TambahObatScreen> {
 
     setState(() => _isLoading = true);
 
-    // Buat objek obat baru
     final obat = Obat(
       id: const Uuid().v4(),
       nama: _namaCtrl.text.trim(),
@@ -472,17 +540,14 @@ class _TambahObatScreenState extends State<TambahObatScreen> {
       hari: Set.from(_hariSelected),
       notifMinum: _notifMinum,
       notifStok: _notifStok,
+      anggotaId: _anggotaIdTerpilih,
     );
 
-    // Panggil fungsi tambahObat dari obat_model.dart
-    // Fungsi ini akan update obatNotifier dan logNotifier
-    tambahObat(obat);
+    await tambahObat(obat);
 
+    if (!mounted) return;
     setState(() => _isLoading = false);
-
     _showSnackbar('Berhasil menambahkan ${obat.nama}', isSuccess: true);
-
-    // Kembali dengan hasil true agar Beranda tahu ada perubahan
     Navigator.pop(context, true);
   }
 
@@ -498,7 +563,8 @@ class _TambahObatScreenState extends State<TambahObatScreen> {
                 : AppColors.slate800,
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.all(16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10)),
         duration: const Duration(seconds: 2),
       ),
     );
