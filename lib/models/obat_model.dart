@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/supabase_service.dart';
+import '../services/notification_service.dart';
 import 'user_model.dart';
 
 enum MedStatus { sudah, belum, terlewat }
@@ -132,6 +133,21 @@ Future<void> tambahObat(Obat obat) async {
   logAktivitas.insert(0, log);
   logNotifier.value = List.from(logAktivitas);
 
+  // Jadwalkan notifikasi pengingat minum obat kalau diaktifkan
+  if (obat.notifMinum) {
+    try {
+      await NotificationService.jadwalkanNotifObat(
+        obatId: obat.id,
+        namaObat: obat.nama,
+        dosis: obat.dosis,
+        jamMenit: obat.waktu,
+        hariAktif: obat.hari,
+      );
+    } catch (e) {
+      print('DEBUG ERROR jadwalkanNotif: $e');
+    }
+  }
+
   try {
     final email = currentUserEmail;
     if (email != null) {
@@ -150,6 +166,25 @@ Future<void> muatObatDariDB(String email) async {
     daftarObat = obatDariDB;
     obatNotifier.value = List.from(daftarObat);
     hitungStatistikSemuaAnggota();
+
+    // Re-jadwalkan notif untuk semua obat aktif yang dimuat dari DB
+    // (notif terjadwal hilang kalau app di-uninstall/reinstall atau device reboot)
+    for (final obat in daftarObat) {
+      if (obat.notifMinum && obat.status != MedStatus.sudah) {
+        try {
+          await NotificationService.jadwalkanNotifObat(
+            obatId: obat.id,
+            namaObat: obat.nama,
+            dosis: obat.dosis,
+            jamMenit: obat.waktu,
+            hariAktif: obat.hari,
+          );
+        } catch (e) {
+          print('DEBUG ERROR re-jadwalkan notif ${obat.nama}: $e');
+        }
+      }
+    }
+
     print('DEBUG: ${obatDariDB.length} obat dimuat dari Supabase');
   } catch (e) {
     print('DEBUG ERROR muatObat: $e');
@@ -201,6 +236,13 @@ Future<void> hapusObat(String id) async {
     daftarObat.removeAt(index);
     obatNotifier.value = List.from(daftarObat);
     hitungStatistikSemuaAnggota();
+
+    // Batalkan notifikasi terjadwal untuk obat ini
+    try {
+      await NotificationService.batalkanNotifObat(obat.id, obat.hari);
+    } catch (e) {
+      print('DEBUG ERROR batalkanNotif: $e');
+    }
 
     final log = LogAktivitas(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -271,7 +313,9 @@ void cekObatTerlewatOtomatis() {
 
   for (final obat in daftarObat) {
     if (obat.status == MedStatus.belum && obat.hari.contains(hariIni)) {
-      final jamParts = obat.waktu.split(':');
+      final jamParts = obat.waktu.contains(':')
+          ? obat.waktu.split(':')
+          : obat.waktu.split('.');
       if (jamParts.length != 2) continue;
 
       final jam = int.tryParse(jamParts[0]);
@@ -412,7 +456,6 @@ void hitungStatistikSemuaAnggota() {
 Future<void> muatDataUntukAkunAktif() async {
   final email = currentUserEmail;
   if (email == null) {
-    // Nggak ada user aktif -> kosongkan biar nggak nyisa punya akun lama
     daftarObat = [];
     obatNotifier.value = [];
     daftarAnggotaKeluarga = [];

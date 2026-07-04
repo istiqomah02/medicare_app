@@ -10,6 +10,7 @@ import 'screens/jadwal_screen.dart';
 import 'screens/riwayat_screen.dart';
 import 'screens/pengaturan_screen.dart';
 import 'services/supabase_service.dart';
+import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,9 +21,17 @@ void main() async {
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJnZmV0Zm9yZmxnZmpyY2JhanlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5ODc5MDYsImV4cCI6MjA5ODU2MzkwNn0.APewImr5TGqhQemDoCgPwMrjP5xiQZq-fBgNtRiK-1s',
   );
 
+  // Setup notifikasi (aman kalau gagal di platform yg belum didukung penuh, misal web)
+  try {
+    await NotificationService.init();
+    await NotificationService.requestPermission();
+  } catch (e) {
+    print('DEBUG ERROR setup notifikasi: $e');
+  }
+
   initDummyData();
   await muatAnggotaKeluargaDariDB();
-  await muatSemuaAkunDariDB();
+  await muatAkunTersimpanLokal();
 
   if (daftarAkun.isNotEmpty) {
     akunTerakhirLogin = daftarAkun.first;
@@ -30,8 +39,7 @@ void main() async {
     print('DEBUG main: user aktif = ${daftarAkun.first.email}');
     await muatObatDariDB(daftarAkun.first.email);
   } else {
-    await simpanAkunLogin('cahyaniarum@gmail.com', nama: 'Nayla');
-    print('DEBUG main: fallback login cahyaniarum@gmail.com');
+    print('DEBUG main: belum ada akun tersimpan di device ini');
   }
 
   SystemChrome.setSystemUIOverlayStyle(
@@ -78,6 +86,15 @@ class _MainNavigationState extends State<MainNavigation> {
     ),
     const PengaturanScreen(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    // Cek obat yang jadwalnya udah lewat, tandai "Terlewat" otomatis
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      cekObatTerlewatOtomatis();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -29,6 +29,8 @@ class _TambahObatScreenState extends State<TambahObatScreen> {
   // null = Diri Sendiri
   String? _anggotaIdTerpilih;
 
+  DateTime _tanggalMulai = DateTime.now();
+
   final List<String> _waktuOptions = [
     'Pagi 08.00', 'Siang 13.00', 'Sore 17.00', 'Malam 20.00'
   ];
@@ -72,6 +74,8 @@ class _TambahObatScreenState extends State<TambahObatScreen> {
               const _SectionLabel(text: 'UNTUK SIAPA'),
               _buildAnggotaSelector(),
               _buildInfoCard(),
+              const _SectionLabel(text: 'TANGGAL MULAI'),
+              _buildTanggalMulaiCard(),
               const _SectionLabel(text: 'WAKTU MINUM'),
               _buildWaktuCard(),
               const _SectionLabel(text: 'NOTIFIKASI'),
@@ -197,6 +201,74 @@ class _TambahObatScreenState extends State<TambahObatScreen> {
     );
   }
 
+  Widget _buildTanggalMulaiCard() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.slate100.withOpacity(0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: GestureDetector(
+        onTap: () async {
+          final dipilih = await showDatePicker(
+            context: context,
+            initialDate: _tanggalMulai,
+            firstDate: DateTime(2020),
+            lastDate: DateTime(2100),
+          );
+          if (dipilih != null) {
+            setState(() => _tanggalMulai = dipilih);
+          }
+        },
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppColors.purple50,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.calendar_today_outlined,
+                  size: 18, color: AppColors.purple600),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Mulai minum dari',
+                      style: TextStyle(
+                          fontSize: 12, color: AppColors.slate400)),
+                  Text(_formatTanggal(_tanggalMulai),
+                      style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.slate800)),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right,
+                size: 20, color: AppColors.slate400),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatTanggal(DateTime d) {
+    const bulan = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+    return '${d.day} ${bulan[d.month - 1]} ${d.year}';
+  }
+
   Widget _buildField(String label, TextEditingController ctrl,
       {String? hint, TextInputType? keyboardType}) {
     return Column(
@@ -274,6 +346,27 @@ class _TambahObatScreenState extends State<TambahObatScreen> {
     );
   }
 
+  Future<void> _pilihWaktuKustom() async {
+    final dipilih = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+    if (dipilih == null) return;
+
+    final jam = dipilih.hour.toString().padLeft(2, '0');
+    final menit = dipilih.minute.toString().padLeft(2, '0');
+    final label = 'Kustom $jam.$menit';
+
+    setState(() {
+      if (!_waktuOptions.contains(label)) {
+        _waktuOptions.add(label);
+      }
+      _waktuSelected
+        ..clear()
+        ..add(label);
+    });
+  }
+
   Widget _buildWaktuCard() {
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 4, 16, 0),
@@ -301,42 +394,69 @@ class _TambahObatScreenState extends State<TambahObatScreen> {
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: _waktuOptions.map((w) {
-              final sel = _waktuSelected.contains(w);
-              return GestureDetector(
-                onTap: () => setState(() =>
-                    sel ? _waktuSelected.remove(w) : _waktuSelected.add(w)),
+            children: [
+              ..._waktuOptions.map((w) {
+                final sel = _waktuSelected.contains(w);
+                return GestureDetector(
+                  onTap: () => setState(() =>
+                      sel ? _waktuSelected.remove(w) : _waktuSelected.add(w)),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: sel ? AppColors.slate900 : AppColors.slate50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                          color: sel
+                              ? AppColors.slate900
+                              : AppColors.slate200,
+                          width: 1),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (sel)
+                          const Icon(Icons.check_circle,
+                              color: Colors.white, size: 14),
+                        if (sel) const SizedBox(width: 4),
+                        Text(w,
+                            style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: sel
+                                    ? Colors.white
+                                    : AppColors.slate800)),
+                      ],
+                    ),
+                  ),
+                );
+              }),
+              GestureDetector(
+                onTap: _pilihWaktuKustom,
                 child: Container(
                   padding: const EdgeInsets.symmetric(
                       horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
-                    color: sel ? AppColors.slate900 : AppColors.slate50,
+                    color: AppColors.purple50,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                        color: sel
-                            ? AppColors.slate900
-                            : AppColors.slate200,
-                        width: 1),
+                        color: AppColors.purple200, width: 1),
                   ),
-                  child: Row(
+                  child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      if (sel)
-                        const Icon(Icons.check_circle,
-                            color: Colors.white, size: 14),
-                      if (sel) const SizedBox(width: 4),
-                      Text(w,
+                      Icon(Icons.add, size: 14, color: AppColors.purple600),
+                      SizedBox(width: 4),
+                      Text('Kustom',
                           style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
-                              color: sel
-                                  ? Colors.white
-                                  : AppColors.slate800)),
+                              color: AppColors.purple600)),
                     ],
                   ),
                 ),
-              );
-            }).toList(),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
           const Text('Hari Pengulangan',
@@ -541,6 +661,7 @@ class _TambahObatScreenState extends State<TambahObatScreen> {
       notifMinum: _notifMinum,
       notifStok: _notifStok,
       anggotaId: _anggotaIdTerpilih,
+      tanggalMulai: _tanggalMulai,
     );
 
     await tambahObat(obat);
