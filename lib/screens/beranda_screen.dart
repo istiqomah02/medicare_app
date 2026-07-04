@@ -23,13 +23,10 @@ class BerandaScreen extends StatelessWidget {
               child: ValueListenableBuilder<List<Obat>>(
                 valueListenable: obatNotifier,
                 builder: (context, daftarObat, _) {
-                  // Debug: print jumlah obat
                   debugPrint('Beranda rebuild: ${daftarObat.length} obat');
-
                   final sudah = daftarObat
                       .where((o) => o.status == MedStatus.sudah)
                       .length;
-
                   return ListView(
                     padding: const EdgeInsets.only(bottom: 24),
                     children: [
@@ -56,7 +53,7 @@ class BerandaScreen extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SectionLabel(text: 'KELUARGA'),
+            const SectionLabel(text: 'KELUARGA'),
             ...daftarAnggota.map((a) => KeluargaCard(
                   anggota: a,
                   onTap: () {
@@ -76,39 +73,74 @@ class BerandaScreen extends StatelessWidget {
 
   Widget _buildEmptyState(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-      padding: const EdgeInsets.all(24),
+      margin: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.slate100, width: 0.5),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.medication_outlined,
-              size: 48, color: AppColors.slate300),
-          const SizedBox(height: 12),
-          const Text('Belum ada obat',
-              style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.slate600)),
-          const SizedBox(height: 4),
-          const Text('Mulai tambahkan obat Anda sekarang',
-              style: TextStyle(fontSize: 13, color: AppColors.slate400)),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const TambahObatScreen()),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.slate800,
-              foregroundColor: Colors.white,
+          Container(
+            width: 64,
+            height: 64,
+            decoration: const BoxDecoration(
+              color: AppColors.slate50,
+              shape: BoxShape.circle,
             ),
-            child: const Text('Tambah Obat'),
+            child: const Icon(Icons.medication_outlined,
+                size: 32, color: AppColors.slate300),
+          ),
+          const SizedBox(height: 14),
+          const Text(
+            'Belum ada obat',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: AppColors.slate600,
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Tambahkan obat pertama Anda\nuntuk mulai memantau jadwal minum',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 12,
+              color: AppColors.slate400,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 20),
+          GestureDetector(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const TambahObatScreen()),
+            ),
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 24, vertical: 10),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [AppColors.slate800, AppColors.slate900],
+                ),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.add, color: Colors.white, size: 14),
+                  SizedBox(width: 6),
+                  Text('Tambah Obat',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      )),
+                ],
+              ),
+            ),
           ),
         ],
       ),
@@ -136,25 +168,24 @@ class BerandaScreen extends StatelessWidget {
                           letterSpacing: -0.4)),
                   SizedBox(height: 2),
                   Text('Minggu, 31 Mei 2026',
-                      style:
-                          TextStyle(fontSize: 12, color: AppColors.slate400)),
+                      style: TextStyle(
+                          fontSize: 12, color: AppColors.slate400)),
                 ],
               ),
               GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) => const NotifikasiScreen()),
-                  );
-                },
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const NotifikasiScreen()),
+                ),
                 child: Container(
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
                     color: AppColors.slate50,
                     shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.slate100, width: 0.5),
+                    border:
+                        Border.all(color: AppColors.slate100, width: 0.5),
                   ),
                   child: const Icon(Icons.notifications_outlined,
                       size: 20, color: AppColors.slate900),
@@ -169,7 +200,8 @@ class BerandaScreen extends StatelessWidget {
                 child: GestureDetector(
                   onTap: () async {
                     final navigator = Navigator.of(context);
-                    final scaffoldMessenger = ScaffoldMessenger.of(context);
+                    final scaffoldMessenger =
+                        ScaffoldMessenger.of(context);
                     final result = await navigator.push(
                       MaterialPageRoute(
                           builder: (_) => const TambahObatScreen()),
@@ -178,7 +210,8 @@ class BerandaScreen extends StatelessWidget {
                     if (result == true) {
                       scaffoldMessenger.showSnackBar(
                         SnackBar(
-                          content: const Text('Obat berhasil ditambahkan!'),
+                          content:
+                              const Text('Obat berhasil ditambahkan!'),
                           backgroundColor: AppColors.green400,
                           behavior: SnackBarBehavior.floating,
                           margin: const EdgeInsets.all(16),
@@ -216,18 +249,18 @@ class BerandaScreen extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const RiwayatScreen()),
-                    );
-                  },
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const RiwayatScreen()),
+                  ),
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 9),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: AppColors.slate100, width: 0.5),
+                      border: Border.all(
+                          color: AppColors.slate100, width: 0.5),
                     ),
                     child: const Center(
                       child: Text('Lihat Riwayat',
@@ -241,19 +274,19 @@ class BerandaScreen extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const KeluargaScreen()),
-                  );
-                },
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const KeluargaScreen()),
+                ),
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 9),
                   decoration: BoxDecoration(
                     color: AppColors.purple50,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: AppColors.purple200, width: 0.5),
+                    border: Border.all(
+                        color: AppColors.purple200, width: 0.5),
                   ),
                   child: const Row(
                     children: [
@@ -284,8 +317,8 @@ class BerandaScreen extends StatelessWidget {
                   _buildQuickStat(
                       'Diminum', '${stats['sudah']}', AppColors.green400),
                   const SizedBox(width: 16),
-                  _buildQuickStat('Kepatuhan', '${stats['persentase']}%',
-                      AppColors.purple400),
+                  _buildQuickStat('Kepatuhan',
+                      '${stats['persentase']}%', AppColors.purple400),
                 ],
               );
             },
@@ -301,24 +334,17 @@ class BerandaScreen extends StatelessWidget {
         Container(
           width: 6,
           height: 6,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 6),
-        Text(
-          '$label: ',
-          style: const TextStyle(fontSize: 11, color: AppColors.slate400),
-        ),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            color: color,
-          ),
-        ),
+        Text('$label: ',
+            style: const TextStyle(
+                fontSize: 11, color: AppColors.slate400)),
+        Text(value,
+            style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: color)),
       ],
     );
   }
@@ -374,20 +400,23 @@ class BerandaScreen extends StatelessWidget {
     );
   }
 
-  Future<bool> _konfirmasiHapusObat(BuildContext context, String nama) async {
+  Future<bool> _konfirmasiHapusObat(
+      BuildContext context, String nama) async {
     final hasil = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
           backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16)),
           title: const Text('Hapus Obat?',
               style: TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 16,
                   color: AppColors.slate800)),
           content: Text('Obat "$nama" akan dihapus permanen.',
-              style: const TextStyle(fontSize: 13, color: AppColors.slate400)),
+              style: const TextStyle(
+                  fontSize: 13, color: AppColors.slate400)),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, false),
@@ -399,7 +428,8 @@ class BerandaScreen extends StatelessWidget {
                 backgroundColor: AppColors.red400,
                 foregroundColor: Colors.white,
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
               ),
               onPressed: () => Navigator.pop(dialogContext, true),
               child: const Text('Hapus'),

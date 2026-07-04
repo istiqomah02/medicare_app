@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../app_theme.dart';
+import '../models/user_model.dart';
 import 'login_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -25,12 +26,24 @@ class _SplashScreenState extends State<SplashScreen>
     _scaleAnim = Tween<double>(begin: 0.8, end: 1)
         .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutBack));
     _ctrl.forward();
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) {
-        Navigator.pushReplacement(
-            context, MaterialPageRoute(builder: (_) => const LoginScreen()));
-      }
-    });
+    _mulai();
+  }
+
+  Future<void> _mulai() async {
+    // Muat semua akun yang tersimpan di Supabase, supaya daftarAkunNotifier
+    // (dipakai buat validasi "maksimal 5 akun") selalu akurat sejak awal.
+    try {
+      await muatSemuaAkunDariDB();
+    } catch (e) {
+      print('DEBUG ERROR muatSemuaAkunDariDB di splash: $e');
+    }
+
+    await Future.delayed(const Duration(seconds: 2));
+
+    if (mounted) {
+      Navigator.pushReplacement(
+          context, MaterialPageRoute(builder: (_) => const LoginScreen()));
+    }
   }
 
   @override

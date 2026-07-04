@@ -151,7 +151,7 @@ class RiwayatScreen extends StatelessWidget {
         physics: const NeverScrollableScrollPhysics(),
         crossAxisSpacing: 10,
         mainAxisSpacing: 10,
-        childAspectRatio: 1.6,
+        childAspectRatio: 1.45,
         children: stats.map((s) {
           return Container(
             padding: const EdgeInsets.all(14),

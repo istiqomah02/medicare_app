@@ -155,40 +155,71 @@ class TambahAkunScreen extends StatelessWidget {
   }
 
   Widget _buildTambahBaru(BuildContext context) {
-    return InkWell(
-      onTap: () => _showTambahAkunDialog(context),
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
+    return ValueListenableBuilder<List<UserAccount>>(
+      valueListenable: daftarAkunNotifier,
+      builder: (context, daftar, _) {
+        final penuh = daftar.length >= 5;
+        return InkWell(
+          onTap: penuh ? null : () => _showTambahAkunDialog(context),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.slate100, width: 0.5),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: AppColors.slate100,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(Icons.add_rounded,
-                  color: AppColors.slate800, size: 22),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: penuh ? AppColors.slate50 : Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.slate100, width: 0.5),
             ),
-            const SizedBox(width: 12),
-            const Expanded(
-              child: Text('Tambah Akun Baru',
-                  style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.slate800)),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: AppColors.slate100,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    penuh ? Icons.block_rounded : Icons.add_rounded,
+                    color:
+                        penuh ? AppColors.slate400 : AppColors.slate800,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        penuh
+                            ? 'Batas maksimal 5 akun tercapai'
+                            : 'Tambah Akun Baru',
+                        style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: penuh
+                                ? AppColors.slate400
+                                : AppColors.slate800),
+                      ),
+                      if (penuh)
+                        const Padding(
+                          padding: EdgeInsets.only(top: 2),
+                          child: Text(
+                            'Hapus salah satu akun dulu untuk menambah yang baru',
+                            style: TextStyle(
+                                fontSize: 11, color: AppColors.slate400),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                if (!penuh)
+                  const Icon(Icons.chevron_right, color: AppColors.slate400),
+              ],
             ),
-            const Icon(Icons.chevron_right, color: AppColors.slate400),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -225,6 +256,15 @@ class _TambahAkunDialogState extends State<_TambahAkunDialog> {
     }
     if (!email.contains('@')) {
       setState(() => _errorText = 'Format email tidak valid');
+      return;
+    }
+    if (sandi.length < 6) {
+      setState(() => _errorText = 'Kata sandi minimal 6 karakter');
+      return;
+    }
+    if (daftarAkunNotifier.value.length >= 5) {
+      setState(() => _errorText =
+          'Maksimal 5 akun (termasuk akun utama). Hapus salah satu dulu.');
       return;
     }
 

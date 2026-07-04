@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:typed_data';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/supabase_service.dart';
 
 class UserAccount {
@@ -47,16 +48,62 @@ String _buatInisial(String nama) {
 // Password cache lokal (tetap dipakai sebagai fallback)
 final Map<String, String> _passwordMap = {};
 
-/// Load semua user dari Supabase ke cache lokal saat app start
-Future<void> muatSemuaAkunDariDB() async {
+// ─────────────────────────────────────────────
+// DAFTAR AKUN PER-DEVICE (SharedPreferences)
+// ─────────────────────────────────────────────
+// Supaya "akun tersimpan" itu beda-beda per HP/device, bukan nampilin SEMUA
+// akun yang pernah dibuat siapapun di seluruh database.
+
+const String _kEmailTersimpanKey = 'daftar_email_tersimpan_lokal';
+
+Future<Set<String>> _ambilEmailTersimpanLokal() async {
+  final prefs = await SharedPreferences.getInstance();
+  final raw = prefs.getStringList(_kEmailTersimpanKey);
+  return (raw ?? []).map((e) => e.toLowerCase()).toSet();
+}
+
+Future<void> _tambahEmailTersimpanLokal(String email) async {
+  final prefs = await SharedPreferences.getInstance();
+  final current = prefs.getStringList(_kEmailTersimpanKey) ?? [];
+  final emailLower = email.trim().toLowerCase();
+  if (!current.contains(emailLower)) {
+    current.add(emailLower);
+    await prefs.setStringList(_kEmailTersimpanKey, current);
+  }
+}
+
+Future<void> _hapusEmailTersimpanLokal(String email) async {
+  final prefs = await SharedPreferences.getInstance();
+  final current = prefs.getStringList(_kEmailTersimpanKey) ?? [];
+  current.removeWhere((e) => e.toLowerCase() == email.trim().toLowerCase());
+  await prefs.setStringList(_kEmailTersimpanKey, current);
+}
+
+/// Panggil ini di splash screen (GANTIKAN muatSemuaAkunDariDB).
+/// Cuma nampilin akun yang PERNAH login/ditambah di device ini.
+Future<void> muatAkunTersimpanLokal() async {
   try {
-    final users = await fetchSemuaUser();
+    final emailTersimpan = await _ambilEmailTersimpanLokal();
+    if (emailTersimpan.isEmpty) {
+      daftarAkun.clear();
+      daftarAkunNotifier.value = [];
+      return;
+    }
+    final semuaUser = await fetchSemuaUser();
     daftarAkun.clear();
-    daftarAkun.addAll(users);
+    daftarAkun.addAll(
+      semuaUser.where((u) => emailTersimpan.contains(u.email.toLowerCase())),
+    );
     daftarAkunNotifier.value = List.from(daftarAkun);
   } catch (e) {
-    // fallback: biarkan daftarAkun kosong, user bisa login manual
+    // fallback: biarkan daftarAkun kosong
   }
+}
+
+/// Versi lama — masih ada buat jaga-jaga kalau ada bagian lain yang manggil,
+/// tapi SEKARANG diarahkan ke versi per-device juga.
+Future<void> muatSemuaAkunDariDB() async {
+  await muatAkunTersimpanLokal();
 }
 
 /// Login — cek ke Supabase, kalau belum ada buat akun baru
@@ -96,6 +143,9 @@ Future<void> simpanAkunLogin(String email, {String nama = ''}) async {
       await simpanUserKeDB(akunBaru, password);
     }
   }
+
+  // Tandai akun ini sebagai "tersimpan di device ini"
+  await _tambahEmailTersimpanLokal(emailRapi);
 
   currentUserNotifier.value = akunTerakhirLogin;
   daftarAkunNotifier.value = List.from(daftarAkun);
@@ -173,6 +223,9 @@ Future<bool> tambahAkunTanpaLogin(String email, String password) async {
   // Simpan ke Supabase
   await simpanUserKeDB(akunBaru, password);
 
+  // Tandai akun ini sebagai "tersimpan di device ini"
+  await _tambahEmailTersimpanLokal(emailRapi);
+
   return true;
 }
 
@@ -180,6 +233,9 @@ Future<void> hapusAkun(String email) async {
   daftarAkun.removeWhere((a) => a.email.toLowerCase() == email.toLowerCase());
   _passwordMap.remove(email.toLowerCase());
   daftarAkunNotifier.value = List.from(daftarAkun);
+
+  // Hapus dari daftar lokal device ini juga
+  await _hapusEmailTersimpanLokal(email);
 
   // Hapus dari Supabase
   await hapusUserDariDB(email);

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../app_theme.dart';
 import '../models/user_model.dart';
+import '../services/supabase_service.dart';
 import '../main.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -14,9 +15,70 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   bool _showPass = false;
+  bool _isLoading = false;
+  String? _errorText;
 
-  void _masuk() {
-    simpanAkunLogin(_emailCtrl.text);
+  Future<void> _masuk() async {
+    final email = _emailCtrl.text.trim();
+    final pass = _passCtrl.text.trim();
+
+    if (email.isEmpty || pass.isEmpty) {
+      setState(() => _errorText = 'Email dan kata sandi harus diisi');
+      return;
+    }
+    if (!email.contains('@')) {
+      setState(() => _errorText = 'Format email tidak valid');
+      return;
+    }
+    if (pass.length < 6) {
+      setState(() => _errorText = 'Kata sandi minimal 6 karakter');
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorText = null;
+    });
+
+    try {
+      final akunDb = await fetchUserByEmail(email);
+
+      if (akunDb != null) {
+        // Email sudah terdaftar -> password WAJIB cocok
+        final passwordTersimpan = await getPasswordDariDB(email);
+        if (passwordTersimpan != pass) {
+          if (!mounted) return;
+          setState(() {
+            _isLoading = false;
+            _errorText = 'Email atau kata sandi salah';
+          });
+          return;
+        }
+        await simpanAkunLogin(email);
+      } else {
+        // Email belum ada -> daftar akun baru dengan password ini
+        final berhasil = await tambahAkunTanpaLogin(email, pass);
+        if (!berhasil) {
+          if (!mounted) return;
+          setState(() {
+            _isLoading = false;
+            _errorText = 'Gagal membuat akun, coba lagi';
+          });
+          return;
+        }
+        await simpanAkunLogin(email);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _errorText = 'Terjadi kesalahan, coba lagi';
+      });
+      return;
+    }
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
     Navigator.pushReplacement(
         context, MaterialPageRoute(builder: (_) => const MainNavigation()));
   }
@@ -152,7 +214,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             controller: _passCtrl,
                             obscureText: !_showPass,
                             decoration: InputDecoration(
-                              hintText: 'Masukan sandi',
+                              hintText: 'Masukan sandi (minimal 6 karakter)',
                               hintStyle: const TextStyle(
                                   color: AppColors.slate400, fontSize: 14),
                               contentPadding: const EdgeInsets.symmetric(
@@ -185,11 +247,19 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                           ),
+                          if (_errorText != null) ...[
+                            const SizedBox(height: 8),
+                            Text(_errorText!,
+                                style: const TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.red400,
+                                    fontWeight: FontWeight.w600)),
+                          ],
                           const SizedBox(height: 20),
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton(
-                              onPressed: _masuk,
+                              onPressed: _isLoading ? null : _masuk,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.slate800,
                                 foregroundColor: Colors.white,
@@ -199,11 +269,22 @@ class _LoginScreenState extends State<LoginScreen> {
                                     borderRadius: BorderRadius.circular(10)),
                                 elevation: 0,
                               ),
-                              child: const Text('MASUK',
-                                  style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w700,
-                                      letterSpacing: 1)),
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      height: 18,
+                                      width: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                                Colors.white),
+                                      ),
+                                    )
+                                  : const Text('MASUK',
+                                      style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w700,
+                                          letterSpacing: 1)),
                             ),
                           ),
                         ],
