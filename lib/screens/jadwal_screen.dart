@@ -12,20 +12,26 @@ class JadwalScreen extends StatefulWidget {
 }
 
 class _JadwalScreenState extends State<JadwalScreen> {
+  // Tanggal hari ini beneran (jam dibuang, cuma tanggal)
+  static DateTime get _hariIni {
+    final n = DateTime.now();
+    return DateTime(n.year, n.month, n.day);
+  }
+
   // Tanggal yang sedang dipilih user
-  DateTime _selectedDate = DateTime(2026, 5, 31);
+  late DateTime _selectedDate = _hariIni;
 
   // Senin dari minggu yang sedang ditampilkan di strip (mode ringkas)
-  DateTime _weekAnchor = _mondayOf(DateTime(2026, 5, 31));
+  late DateTime _weekAnchor = _mondayOf(_hariIni);
 
   // Status: kalender penuh sedang terbuka atau tidak (default tertutup -> mode ringkas)
   bool _isCalendarExpanded = false;
 
   // Bulan yang sedang ditampilkan saat kalender penuh terbuka
-  DateTime _focusedMonth = DateTime(2026, 5, 1);
+  late DateTime _focusedMonth = DateTime(_hariIni.year, _hariIni.month, 1);
 
   // Bulan acuan untuk PageController (index tengah = bulan ini)
-  final DateTime _baseMonth = DateTime(2026, 5, 1);
+  late final DateTime _baseMonth = DateTime(_hariIni.year, _hariIni.month, 1);
   static const int _pageMid =
       1000; // beri ruang ratusan bulan ke depan & belakang
 
@@ -93,20 +99,34 @@ class _JadwalScreenState extends State<JadwalScreen> {
   }
 
   // Indikator berdasarkan data obat asli:
-  // - Lihat obat apa saja yang dijadwalkan pada hari tersebut (field `hari` di Obat).
-  // - Jika tidak ada obat yang dijadwalkan di hari itu -> tidak ada titik (null).
-  // - Jika ada obat dengan stok menipis (stokHariLagi <= 7) -> kuning (perlu perhatian).
-  // - Jika semua obat di hari itu stoknya masih aman -> hijau (aman).
+  // - Obat cuma dianggap berlaku dari tanggalMulai ke depan (tanggal sebelum
+  //   tanggalMulai tidak dapat titik sama sekali, walau hari-nya cocok).
+  // - Titik HIJAU: tanggal itu cocok dengan hari pengulangan obat.
+  // - Titik ORANYE: menimpa hijau, khusus di tanggal proyeksi stok bakal habis
+  //   (tanggalMulai + stokHariLagi), bukan di semua hari.
   Color? _dotColorFor(DateTime date) {
+    final DateTime tanggal = DateTime(date.year, date.month, date.day);
     final String namaHari = _hariLabel[date.weekday - 1];
-    final List<Obat> obatHariIni =
-        daftarObat.where((o) => o.hari.contains(namaHari)).toList();
+
+    final List<Obat> obatHariIni = daftarObat.where((o) {
+      final DateTime mulai =
+          DateTime(o.tanggalMulai.year, o.tanggalMulai.month, o.tanggalMulai.day);
+      final DateTime habis =
+          DateTime(o.tanggalHabis.year, o.tanggalHabis.month, o.tanggalHabis.day);
+      final bool sudahMulai = !tanggal.isBefore(mulai);
+      final bool belumHabis = !tanggal.isAfter(habis);
+      return sudahMulai && belumHabis && o.hari.contains(namaHari);
+    }).toList();
 
     if (obatHariIni.isEmpty) return null;
 
-    final bool adaStokMenipis =
-        obatHariIni.any((o) => o.stokHariLagi <= 7);
-    return adaStokMenipis ? AppColors.amber400 : AppColors.green400;
+    final bool adaYangHabisDiTanggalIni = obatHariIni.any((o) {
+      final DateTime habis = DateTime(
+          o.tanggalHabis.year, o.tanggalHabis.month, o.tanggalHabis.day);
+      return _isSameDate(habis, tanggal);
+    });
+
+    return adaYangHabisDiTanggalIni ? AppColors.amber400 : AppColors.green400;
   }
 
   String _formatSelectedDate() {
@@ -315,9 +335,9 @@ class _JadwalScreenState extends State<JadwalScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        _legendaItem(AppColors.green400, 'Stok aman'),
+        _legendaItem(AppColors.green400, 'Jadwal minum'),
         const SizedBox(width: 16),
-        _legendaItem(AppColors.amber400, 'Stok menipis'),
+        _legendaItem(AppColors.amber400, 'Proyeksi stok habis'),
       ],
     );
   }

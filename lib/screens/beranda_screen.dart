@@ -332,9 +332,82 @@ class BerandaScreen extends StatelessWidget {
     grouped.forEach((waktu, list) {
       widgets.add(SectionLabel(text: waktu.toUpperCase()));
       for (final o in list) {
-        widgets.add(ObatCard(obat: o));
+        widgets.add(_buildObatCardBisaDigeser(o));
       }
     });
     return widgets;
+  }
+
+  Widget _buildObatCardBisaDigeser(Obat o) {
+    return Builder(
+      builder: (context) => Dismissible(
+        key: ValueKey('obat_${o.id}'),
+        direction: DismissDirection.endToStart,
+        confirmDismiss: (_) => _konfirmasiHapusObat(context, o.nama),
+        onDismissed: (_) {
+          hapusObat(o.id);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${o.nama} berhasil dihapus'),
+              backgroundColor: AppColors.red400,
+              behavior: SnackBarBehavior.floating,
+              margin: const EdgeInsets.all(16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        },
+        background: Container(
+          margin: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          alignment: Alignment.centerRight,
+          decoration: BoxDecoration(
+            color: AppColors.red400,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Icon(Icons.delete_outline, color: Colors.white),
+        ),
+        child: ObatCard(obat: o),
+      ),
+    );
+  }
+
+  Future<bool> _konfirmasiHapusObat(BuildContext context, String nama) async {
+    final hasil = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('Hapus Obat?',
+              style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                  color: AppColors.slate800)),
+          content: Text('Obat "$nama" akan dihapus permanen.',
+              style: const TextStyle(fontSize: 13, color: AppColors.slate400)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Batal',
+                  style: TextStyle(color: AppColors.slate400)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.red400,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('Hapus'),
+            ),
+          ],
+        );
+      },
+    );
+    return hasil ?? false;
   }
 }

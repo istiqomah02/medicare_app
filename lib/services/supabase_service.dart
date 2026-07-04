@@ -80,6 +80,7 @@ Future<AnggotaKeluarga?> simpanAnggotaKeluargaKeDB({
   required String userEmail,
   required String nama,
   required String inisial,
+  String hubungan = 'Anggota Keluarga',
   String? akunTerkaitEmail,
 }) async {
   final user = await _db
@@ -104,12 +105,14 @@ Future<AnggotaKeluarga?> simpanAnggotaKeluargaKeDB({
     'akun_terkait_id': akunTerkaitId,
     'nama': nama,
     'inisial': inisial,
+    'hubungan': hubungan,
   }).select().single();
 
   return AnggotaKeluarga(
     id: res['id'],
     nama: res['nama'],
     inisial: res['inisial'],
+    hubungan: res['hubungan'] ?? 'Anggota Keluarga',
     akunTerkaitEmail: akunTerkaitEmail,
   );
 }
@@ -132,6 +135,7 @@ Future<List<AnggotaKeluarga>> fetchAnggotaKeluargaByUser(String userEmail) async
     id: e['id'],
     nama: e['nama'],
     inisial: e['inisial'] ?? '?',
+    hubungan: e['hubungan'] ?? 'Anggota Keluarga',
     akunTerkaitEmail: e['akun_terkait']?['email'],
   )).toList();
 }
@@ -165,6 +169,7 @@ Future<void> simpanObatKDB(Obat obat, String userEmail) async {
     'hari': obat.hari.toList(),
     'notif_minum': obat.notifMinum,
     'notif_stok': obat.notifStok,
+    'tanggal_mulai': obat.tanggalMulai.toIso8601String().split('T').first,
   }, onConflict: 'id');
 }
 
@@ -194,6 +199,9 @@ Future<List<Obat>> fetchObatByUser(String userEmail) async {
     notifMinum: e['notif_minum'] ?? true,
     notifStok: e['notif_stok'] ?? true,
     anggotaId: e['anggota_id'],
+    tanggalMulai: e['tanggal_mulai'] != null
+        ? DateTime.parse(e['tanggal_mulai'])
+        : null,
   )).toList();
 }
 
@@ -228,7 +236,15 @@ Future<void> simpanRiwayatMinum({
   });
 }
 
-Future<List<Map<String, dynamic>>> fetchRiwayatByUser(String userEmail) async {
+/// Ambil riwayat minum. Filter opsional:
+/// - Kalau [hanyaDiriSendiri] true -> cuma riwayat milik pemilik akun (anggota_id kosong)
+/// - Kalau [anggotaId] diisi -> cuma riwayat anggota itu
+/// - Kalau keduanya kosong -> semua riwayat (diri sendiri + semua anggota)
+Future<List<Map<String, dynamic>>> fetchRiwayatByUser(
+  String userEmail, {
+  String? anggotaId,
+  bool hanyaDiriSendiri = false,
+}) async {
   final user = await _db
       .from('users')
       .select('id')
@@ -236,11 +252,17 @@ Future<List<Map<String, dynamic>>> fetchRiwayatByUser(String userEmail) async {
       .maybeSingle();
   if (user == null) return [];
 
-  final res = await _db
+  var query = _db
       .from('riwayat_minum')
-      .select('*, obat(nama, dosis)')
-      .eq('user_id', user['id'])
-      .order('tanggal', ascending: false);
+      .select('*, obat(nama, dosis), keluarga:anggota_id(nama)')
+      .eq('user_id', user['id']);
 
+  if (hanyaDiriSendiri) {
+    query = query.filter('anggota_id', 'is', null);
+  } else if (anggotaId != null) {
+    query = query.eq('anggota_id', anggotaId);
+  }
+
+  final res = await query.order('tanggal', ascending: false);
   return List<Map<String, dynamic>>.from(res);
 }

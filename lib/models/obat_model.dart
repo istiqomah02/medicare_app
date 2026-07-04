@@ -18,7 +18,8 @@ class Obat {
   final bool notifMinum;
   final bool notifStok;
   final DateTime waktuTambah;
-  final String? anggotaId; // null = obat milik pemilik akun sendiri
+  final String? anggotaId;
+  final DateTime tanggalMulai; // mulai berlaku dari tanggal ini (jam dibuang)
 
   Obat({
     required this.id,
@@ -34,13 +35,22 @@ class Obat {
     this.notifStok = true,
     DateTime? waktuTambah,
     this.anggotaId,
-  }) : waktuTambah = waktuTambah ?? DateTime.now();
+    DateTime? tanggalMulai,
+  })  : waktuTambah = waktuTambah ?? DateTime.now(),
+        tanggalMulai = tanggalMulai == null
+            ? DateTime(DateTime.now().year, DateTime.now().month,
+                DateTime.now().day)
+            : DateTime(tanggalMulai.year, tanggalMulai.month, tanggalMulai.day);
+
+  /// Tanggal proyeksi stok bakal habis (tanggalMulai + stokHariLagi hari)
+  DateTime get tanggalHabis => tanggalMulai.add(Duration(days: stokHariLagi));
 
   Obat copyWith({
     String? id, String? nama, String? dosis, String? waktu,
     String? instruksi, MedStatus? status, int? stokTablet,
     int? stokHariLagi, Set<String>? hari, bool? notifMinum,
     bool? notifStok, DateTime? waktuTambah, String? anggotaId,
+    DateTime? tanggalMulai,
   }) {
     return Obat(
       id: id ?? this.id, nama: nama ?? this.nama, dosis: dosis ?? this.dosis,
@@ -51,15 +61,17 @@ class Obat {
       notifStok: notifStok ?? this.notifStok,
       waktuTambah: waktuTambah ?? this.waktuTambah,
       anggotaId: anggotaId ?? this.anggotaId,
+      tanggalMulai: tanggalMulai ?? this.tanggalMulai,
     );
   }
 }
 
 class AnggotaKeluarga {
-  final String id; // uuid dari Supabase
+  final String id;
   final String nama;
   final String inisial;
-  final String? akunTerkaitEmail; // null kalau anggota tanpa akun sendiri
+  final String hubungan; // cth: Anak, Ayah, Ibu, dll
+  final String? akunTerkaitEmail;
   int totalObat;
   int sudahDiminum;
 
@@ -67,6 +79,7 @@ class AnggotaKeluarga {
     required this.id,
     required this.nama,
     required this.inisial,
+    this.hubungan = 'Anggota Keluarga',
     this.akunTerkaitEmail,
     this.totalObat = 0,
     this.sudahDiminum = 0,
@@ -99,7 +112,6 @@ List<LogAktivitas> logAktivitas = [];
 final ValueNotifier<List<Obat>> obatNotifier = ValueNotifier([]);
 final ValueNotifier<List<LogAktivitas>> logNotifier = ValueNotifier([]);
 
-// Ambil email user yang sedang aktif
 String? get currentUserEmail => currentUserNotifier.value?.email;
 
 // === Functions ===
@@ -120,14 +132,12 @@ Future<void> tambahObat(Obat obat) async {
   logAktivitas.insert(0, log);
   logNotifier.value = List.from(logAktivitas);
 
-  // Simpan ke Supabase
   try {
     final email = currentUserEmail;
     if (email != null) {
       await simpanObatKDB(obat, email);
-      print('DEBUG: obat berhasil disimpan ke Supabase untuk $email');
     } else {
-      print('DEBUG: email user aktif null, obat tidak disimpan ke DB');
+      print('DEBUG: email null, obat tidak disimpan ke DB');
     }
   } catch (e) {
     print('DEBUG ERROR simpanObat: $e');
@@ -137,12 +147,10 @@ Future<void> tambahObat(Obat obat) async {
 Future<void> muatObatDariDB(String email) async {
   try {
     final obatDariDB = await fetchObatByUser(email);
-    if (obatDariDB.isNotEmpty) {
-      daftarObat = obatDariDB;
-      obatNotifier.value = List.from(daftarObat);
-      hitungStatistikSemuaAnggota();
-      print('DEBUG: ${obatDariDB.length} obat dimuat dari Supabase');
-    }
+    daftarObat = obatDariDB;
+    obatNotifier.value = List.from(daftarObat);
+    hitungStatistikSemuaAnggota();
+    print('DEBUG: ${obatDariDB.length} obat dimuat dari Supabase');
   } catch (e) {
     print('DEBUG ERROR muatObat: $e');
   }
@@ -248,8 +256,41 @@ void catatStokMenipis(Obat obat) {
 
 void cekStokMenipisSemuaObat() {
   for (final obat in daftarObat) {
-    if (obat.notifStok && obat.stokHariLagi <= 3) catatStokMenipis(obat);
+    if (obat.notifStok && obat.stokHariLagi <= 3) {
+      catatStokMenipis(obat);
+    }
   }
+}
+
+/// Cek obat yang jadwalnya sudah lewat lebih dari 1 jam tapi belum ditandai
+/// diminum, lalu otomatis ubah statusnya jadi 'terlewat'.
+/// Panggil fungsi ini setiap kali halaman utama/beranda dibuka.
+void cekObatTerlewatOtomatis() {
+  final now = DateTime.now();
+  final hariIni = _hariSingkatDariWeekday(now.weekday);
+
+  for (final obat in daftarObat) {
+    if (obat.status == MedStatus.belum && obat.hari.contains(hariIni)) {
+      final jamParts = obat.waktu.split(':');
+      if (jamParts.length != 2) continue;
+
+      final jam = int.tryParse(jamParts[0]);
+      final menit = int.tryParse(jamParts[1]);
+      if (jam == null || menit == null) continue;
+
+      final jadwalHariIni =
+          DateTime(now.year, now.month, now.day, jam, menit);
+
+      if (now.isAfter(jadwalHariIni.add(const Duration(hours: 1)))) {
+        updateStatusObat(obat.id, MedStatus.terlewat);
+      }
+    }
+  }
+}
+
+String _hariSingkatDariWeekday(int weekday) {
+  const hariList = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
+  return hariList[weekday - 1];
 }
 
 void hapusLogAktivitas(String id) {
@@ -278,25 +319,8 @@ String _formatTanggalWaktu(DateTime waktu) {
   return '${waktu.day} ${bulan[waktu.month - 1]} ${waktu.year} ${_formatWaktu(waktu)}';
 }
 
-void initDummyData() {
-  if (daftarObat.isEmpty) {
-    final obat1 = Obat(id: '1', nama: 'Amoxicillin Trihydrate', dosis: '1 tablet',
-        waktu: 'Pagi 08.00', instruksi: 'Setelah makan', status: MedStatus.sudah,
-        stokTablet: 10, stokHariLagi: 24);
-    final obat2 = Obat(id: '2', nama: 'Ketoconazole', dosis: '1 tablet',
-        waktu: 'Siang 13.00', instruksi: 'Setelah makan', status: MedStatus.belum,
-        stokTablet: 12, stokHariLagi: 3);
-    final obat3 = Obat(id: '3', nama: 'Cetirizine', dosis: '1 tablet',
-        waktu: 'Malam 20.00', instruksi: 'Setelah makan', status: MedStatus.sudah,
-        stokTablet: 8, stokHariLagi: 3);
-
-    daftarObat.addAll([obat1, obat2, obat3]);
-    obatNotifier.value = List.from(daftarObat);
-    catatPengingatMinum(obat2);
-    catatObatTerlewat(obat2);
-    cekStokMenipisSemuaObat();
-  }
-}
+// Dummy data dinonaktifkan — semua data diambil dari Supabase
+void initDummyData() {}
 
 // ─────────────────────────────────────────────
 // Fitur Anggota Keluarga (Supabase)
@@ -306,6 +330,10 @@ List<AnggotaKeluarga> daftarAnggotaKeluarga = [];
 final ValueNotifier<List<AnggotaKeluarga>> anggotaKeluargaNotifier =
     ValueNotifier<List<AnggotaKeluarga>>([]);
 
+AnggotaKeluarga get anggotaAdek => daftarAnggotaKeluarga.isNotEmpty
+    ? daftarAnggotaKeluarga.first
+    : AnggotaKeluarga(id: '-', nama: 'Keluarga', inisial: 'K');
+
 String buatInisialAnggota(String nama) {
   final parts = nama.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
   if (parts.isEmpty) return '?';
@@ -313,9 +341,11 @@ String buatInisialAnggota(String nama) {
   return (parts.first[0] + parts.last[0]).toUpperCase();
 }
 
-/// Tambah anggota keluarga baru. [akunTerkaitEmail] diisi kalau anggota ini
-/// mau di-link ke akun user lain yang sudah terdaftar.
-Future<void> tambahAnggotaKeluarga(String nama, {String? akunTerkaitEmail}) async {
+Future<void> tambahAnggotaKeluarga(
+  String nama, {
+  String hubungan = 'Anggota Keluarga',
+  String? akunTerkaitEmail,
+}) async {
   final namaRapi = nama.trim();
   if (namaRapi.isEmpty) return;
 
@@ -327,6 +357,7 @@ Future<void> tambahAnggotaKeluarga(String nama, {String? akunTerkaitEmail}) asyn
       userEmail: email,
       nama: namaRapi,
       inisial: buatInisialAnggota(namaRapi),
+      hubungan: hubungan,
       akunTerkaitEmail: akunTerkaitEmail,
     );
     if (anggotaBaru != null) {
@@ -348,7 +379,6 @@ Future<void> hapusAnggotaKeluarga(String id) async {
   }
 }
 
-/// Panggil ini di splash/setelah login (gantikan muatAnggotaKeluarga lama)
 Future<void> muatAnggotaKeluargaDariDB() async {
   final email = currentUserEmail;
   if (email == null) return;
@@ -362,8 +392,10 @@ Future<void> muatAnggotaKeluargaDariDB() async {
   }
 }
 
-/// Hitung ulang totalObat & sudahDiminum tiap anggota dari data obat lokal.
-/// Dipanggil otomatis tiap kali daftarObat berubah (tambah/hapus/update status/muat).
+Future<void> muatAnggotaKeluarga() async {
+  await muatAnggotaKeluargaDariDB();
+}
+
 void hitungStatistikSemuaAnggota() {
   for (final anggota in daftarAnggotaKeluarga) {
     final obatAnggota = daftarObat.where((o) => o.anggotaId == anggota.id);
@@ -372,4 +404,21 @@ void hitungStatistikSemuaAnggota() {
         obatAnggota.where((o) => o.status == MedStatus.sudah).length;
   }
   anggotaKeluargaNotifier.value = List.from(daftarAnggotaKeluarga);
+}
+
+/// Panggil ini setiap kali user PINDAH/GANTI akun (dari TambahAkunScreen atau
+/// KelolaAkunScreen), supaya obat & anggota keluarga di layar sesuai akun yang
+/// baru aktif — bukan nyisa dari akun sebelumnya.
+Future<void> muatDataUntukAkunAktif() async {
+  final email = currentUserEmail;
+  if (email == null) {
+    // Nggak ada user aktif -> kosongkan biar nggak nyisa punya akun lama
+    daftarObat = [];
+    obatNotifier.value = [];
+    daftarAnggotaKeluarga = [];
+    anggotaKeluargaNotifier.value = [];
+    return;
+  }
+  await muatObatDariDB(email);
+  await muatAnggotaKeluargaDariDB();
 }

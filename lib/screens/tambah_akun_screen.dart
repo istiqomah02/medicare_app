@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../app_theme.dart';
 import '../models/user_model.dart';
+import '../models/obat_model.dart';
 
 class TambahAkunScreen extends StatelessWidget {
   const TambahAkunScreen({super.key});
@@ -84,6 +85,8 @@ class TambahAkunScreen extends StatelessWidget {
                             ? null
                             : () async {
                                 await simpanAkunLogin(akun.email);
+                                // Muat ulang obat & anggota keluarga punya akun ini
+                                await muatDataUntukAkunAktif();
                                 if (context.mounted) Navigator.pop(context);
                               },
                         child: Padding(
@@ -212,7 +215,6 @@ class _TambahAkunDialogState extends State<_TambahAkunDialog> {
   bool _isLoading = false;
   String? _errorText;
 
-  // Dijadikan async karena tambahAkunTanpaLogin sekarang Future
   Future<void> _simpan() async {
     final email = _emailCon.text.trim();
     final sandi = _sandiCon.text.trim();

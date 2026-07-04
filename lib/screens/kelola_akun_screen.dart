@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../app_theme.dart';
 import '../models/user_model.dart';
+import '../models/obat_model.dart';
 import 'tambah_akun_screen.dart';
 
 class KelolaAkunScreen extends StatelessWidget {
@@ -107,9 +108,12 @@ class KelolaAkunScreen extends StatelessWidget {
                                   ),
                             onTap: isActive
                                 ? null
-                                : () {
+                                : () async {
                                     currentUserNotifier.value = akun;
-                                    Navigator.pop(context);
+                                    // Muat ulang obat & anggota keluarga punya akun ini,
+                                    // biar nggak nyisa data akun sebelumnya
+                                    await muatDataUntukAkunAktif();
+                                    if (context.mounted) Navigator.pop(context);
                                   },
                           ),
                           if (!isLast)
