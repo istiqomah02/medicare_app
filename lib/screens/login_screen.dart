@@ -5,7 +5,11 @@ import '../services/supabase_service.dart';
 import '../main.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  // isDaftar = true  -> judul "Daftar Akun" (mode pendaftaran)
+  // isDaftar = false -> judul "Masuk Akun"  (mode login)
+  final bool isDaftar;
+
+  const LoginScreen({super.key, this.isDaftar = true});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -98,6 +102,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final judulCard = widget.isDaftar ? 'Daftar Akun' : 'Masuk Akun';
+    final subJudulCard = widget.isDaftar
+        ? 'Gunakan email & kata sandi'
+        : 'Masukkan email & kata sandi kamu';
+
     return Scaffold(
       backgroundColor: const Color(0xFFD1D5DB),
       body: SafeArea(
@@ -159,14 +168,14 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Daftar Akun',
-                              style: TextStyle(
+                          Text(judulCard,
+                              style: const TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.w700,
                                   color: AppColors.slate800)),
                           const SizedBox(height: 4),
-                          const Text('Gunakan email & kata sandi',
-                              style: TextStyle(
+                          Text(subJudulCard,
+                              style: const TextStyle(
                                   fontSize: 13, color: AppColors.slate400)),
                           const SizedBox(height: 20),
                           const Text('EMAIL',
